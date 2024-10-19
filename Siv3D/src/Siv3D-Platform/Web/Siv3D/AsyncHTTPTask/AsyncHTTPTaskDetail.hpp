@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -20,6 +20,7 @@
 # include <Siv3D/HTTPAsyncStatus.hpp>
 # include <Siv3D/HTTPProgress.hpp>
 # include <Siv3D/BinaryWriter.hpp>
+# include <Siv3D/AsyncHTTPTask.hpp>
 
 namespace s3d
 {
@@ -28,10 +29,13 @@ namespace s3d
 	public:
 
 		SIV3D_NODISCARD_CXX20
-			AsyncHTTPTaskDetail();
+		AsyncHTTPTaskDetail();
 
 		SIV3D_NODISCARD_CXX20
-			AsyncHTTPTaskDetail(URLView url, FilePathView path);
+		AsyncHTTPTaskDetail(URLView url, const HashTable<String, String>& headers, FilePathView path);
+
+		SIV3D_NODISCARD_CXX20
+		AsyncHTTPTaskDetail(StringView method, URLView url, const HashTable<String, String>& headers, FilePathView path);
 
 		~AsyncHTTPTaskDetail();
 
@@ -41,10 +45,16 @@ namespace s3d
 		[[nodiscard]]
 		bool isReady() const;
 
+		void send(Optional<std::string_view> body);
+
 		void cancel();
+
+		void setRequestHeader(StringView name, StringView value);
 
 		[[nodiscard]]
 		const HTTPResponse& getResponse();
+
+		void resolveResponse(const HTTPResponse&);
 
 		[[nodiscard]]
 		HTTPAsyncStatus getStatus();
@@ -61,12 +71,15 @@ namespace s3d
 		[[nodiscard]]
 		bool isAborted() const;
 
-	private:
+		[[nodiscard]]
+		AsyncTask<HTTPResponse> CreateAsyncTask();
 
-		void run(FilePathView path);
+	private:
 
 		////
 		//
+		std::promise<HTTPResponse> m_promise;
+
 		std::mutex m_mutex;
 
 		HTTPProgress m_progress_internal;
@@ -75,7 +88,11 @@ namespace s3d
 		//
 		////
 
+		String m_method;
+		
 		URL m_url;
+
+		AsyncTask<HTTPResponse> m_task;
 
 		HTTPResponse m_response;
 	};

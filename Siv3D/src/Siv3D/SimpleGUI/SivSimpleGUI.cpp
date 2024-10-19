@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -30,6 +30,14 @@ namespace s3d
 {
 	namespace SimpleGUI
 	{
+		namespace detail
+		{
+			static void TextAreaDraw(const TextAreaEditState& text, const Font& font, const int32 fontHeight, const RectF& region,
+				const RectF& textRenderRegion, const double textRenderRegionBottomY,
+				double textCursorLineX, const double textCursorLineY0, const double textCursorLineY1,
+				const String& editingText, const Vec2& editingTextPos, const double maxScroll, const bool enabled);
+		}
+
 		constexpr int32 CellSize = 40;
 		constexpr int32 UnitSize = 36;
 		constexpr ColorF BackgroundColor{ 1.0 };
@@ -65,6 +73,20 @@ namespace s3d
 		constexpr int32 ScrollBarWidth = 18;
 		constexpr ColorF ListBoxSelectedColor{ 0.2, 0.4, 0.8 };
 		constexpr ColorF ListBoxSelectedDisabledColor{ 0.75, 0.85, 1.0 };
+		constexpr double MinTextBoxWidth = 40.0;
+		constexpr double MinTextAreaHeight = 36.0;
+		constexpr double TextAreaScrollBarWidth = 3.0;
+		constexpr double TextAreaScrollBarMinHeight = 16.0;
+		constexpr ColorF TextAreaEditingTextBackgroundColor{ 0.8 };
+		constexpr ColorF TextAreaScrollBarColor{ 0.67 };
+		constexpr ColorF CandidateWindowColor{ 0.98 };
+		constexpr ColorF CandidateWindowFrameColor{ 0.75 };
+		constexpr ColorF CandidateSelectedBackgroundColor{ 0.55, 0.85, 1.0 };
+		constexpr ColorF CandidateTextColor{ 0.11 };
+		constexpr ColorF CandidateMinimapColor{ 0.67 };
+		constexpr double CandidateMargin = 4.0;
+		constexpr double CandidatePadding = 12.0;
+		constexpr double CandidateMinimapWidth = 20.0;
 
 		[[nodiscard]]
 		inline constexpr ColorF GetTextColor(bool enabled) noexcept
@@ -720,259 +742,66 @@ namespace s3d
 
 		RectF TextBoxRegion(const Vec2& pos, double width)
 		{
-			width = Max(width, 40.0);
+			width = Max(width, MinTextBoxWidth);
 
 			return{ pos, width, TextBoxHeight };
 		}
 
 		RectF TextBoxRegionAt(const Vec2& center, double width)
 		{
-			width = Max(width, 40.0);
+			width = Max(width, MinTextBoxWidth);
 
 			return{ Arg::center = center, width, TextBoxHeight };
 		}
 
 		bool TextBox(TextEditState& text, const Vec2& pos, double width, const Optional<size_t>& maxChars, const bool enabled)
 		{
-			width = Max(width, 40.0);
+			width = Max(width, MinTextBoxWidth);
 
 			return TextBoxAt(text, pos + Vec2{ width * 0.5, 18.0 }, width, maxChars, enabled);
 		}
 
 		bool TextBoxAt(TextEditState& text, const Vec2& center, const double _width, const Optional<size_t>& maxChars, const bool enabled)
 		{
-			const Font& font = GetFont();
-			const double width = Max(_width, 40.0);
-			const RectF region{ Arg::center = center, width, TextBoxHeight };
-			const Vec2 textPos{ (region.x + 8), (center.y - font.height() / 2 + FontYOffset - 0.5) };
-			const ColorF textColor = GetTextColor(enabled);
-			const String previousText = text.text;
-			const String editingText = ((text.active && enabled) ? TextInput::GetEditingText() : U"");
-
 			text.cursorPos = Min(text.cursorPos, text.text.size());
 			text.tabKey = false;
 			text.enterKey = false;
 
-			if (enabled)
+			const Font& font = SimpleGUI::GetFont();
+			const int32 fontHeight = font.height();
+
+			const String previousText = text.text;
+			const String editingText = ((text.active && enabled) ? TextInput::GetEditingText() : U"");
+
+			// テキストを更新する
 			{
-				if (text.active)
+				if (text.active && enabled)
 				{
-					region
-						.draw()
-						.drawFrame(0.0, 1.5, ColorF(0.35, 0.7, 1.0, 0.75))
-						.drawFrame(2.5, 0.0, ColorF(0.35, 0.7, 1.0));
-				}
-				else
-				{
-					region
-						.draw()
-						.drawFrame(2.0, 0.0, ColorF(0.5));
-				}
+					// text.text を更新する
+					text.cursorPos = TextInput::UpdateText(text.text, text.cursorPos, TextInputMode::AllowBackSpaceDelete);
 
-				if (text.active)
-				{
-					const String textHeader = text.text.substr(0, text.cursorPos);
-					const String textTail = text.text.substr(text.cursorPos, String::npos);
+				# if not SIV3D_PLATFORM(WEB)
 
-				# if SIV3D_PLATFORM(WINDOWS)
-
-					const auto[editingCursorIndex, editingTargetlength] = Platform::Windows::TextInput::GetCursorIndex();
-					const bool hasEditingTarget = (editingTargetlength > 0);
-
-				# else
-
-					const int32 editingCursorIndex = -1, editingTargetlength = 0;
-					const bool hasEditingTarget = false;
-
-				# endif
-
-					const double fontHeight = font.height();
-					Vec2 pos = textPos;
-					double cursorPosX = 0.0;
-
+					// ショートカットキーによるペースト
+					if ((not editingText) &&
+					# if SIV3D_PLATFORM(MACOS)
+						((KeyCommand + KeyV).down() || (KeyControl + KeyV).down())
+					# else
+						(KeyControl + KeyV).down()
+					# endif
+						)
 					{
-						double begX = 0.0, begY = 0.0, endX = 0.0;
+						if (String paste; Clipboard::GetText(paste))
 						{
-							ScopedCustomShader2D shader{ Font::GetPixelShader(font.method()) };
-
-							for (const auto& glyph : font.getGlyphs(textHeader))
-							{
-								glyph.texture.draw(pos + glyph.getOffset(), textColor);
-								pos.x += glyph.xAdvance;
-							}
-
-							begX = pos.x;
-							begY = 0;
-							endX = pos.x;
-
-							for (auto&& [i, glyph] : Indexed(font.getGlyphs(editingText)))
-							{
-								const int32 currentCharIndex = static_cast<int32>(i);
-
-								if (currentCharIndex == editingCursorIndex)
-								{
-									begX = pos.x;
-									begY = pos.y + fontHeight;
-								}
-								else if (hasEditingTarget && (currentCharIndex == (editingCursorIndex + editingTargetlength - 1)))
-								{
-									endX = pos.x + glyph.xAdvance;
-								}
-
-								glyph.texture.draw(pos + glyph.getOffset(), textColor);
-								pos.x += glyph.xAdvance;
-							}
-
-							cursorPosX = pos.x;
-
-							for (const auto& glyph : font.getGlyphs(textTail))
-							{
-								glyph.texture.draw(pos + glyph.getOffset(), textColor);
-								pos.x += glyph.xAdvance;
-							}
-						}
-
-						if (hasEditingTarget)
-						{
-							Line(begX, begY, endX, begY).movedBy(0, -2).draw(2, textColor);
+							paste.remove_if([](char32 ch) { return (ch < 0x20) || (ch == U'\x7F'); });
+							text.text.insert(text.cursorPos, paste);
+							text.cursorPos += paste.size();
 						}
 					}
 
-					const bool showCursor = (text.cursorStopwatch.ms() % 1200 < 600)
-						|| (text.leftPressStopwatch.isRunning() && text.leftPressStopwatch < SecondsF(0.5))
-						|| (text.rightPressStopwatch.isRunning() && text.rightPressStopwatch < SecondsF(0.5));
-
-					if (showCursor)
-					{
-						const RectF cursor(Arg::leftCenter(Vec2(cursorPosX, center.y).asPoint()), 1, 26);
-						cursor.draw(textColor);
-					}
-				}
-				else
-				{
-					font(text.text).draw(textPos, textColor);
-				}
-			}
-			else
-			{
-				region
-					.draw(ColorF(0.9))
-					.drawFrame(2.0, 0.0, ColorF(0.67));
-
-				font(text.text).draw(textPos, textColor);
-			}
-
-			if (enabled && Cursor::OnClientRect() && region.mouseOver())
-			{
-				Cursor::RequestStyle(CursorStyle::IBeam);
-			}
-
-			if (MouseL.down())
-			{
-				if (enabled && Cursor::OnClientRect() && region.mouseOver())
-				{
-					text.active = true;
-					const double posX = Cursor::PosF().x - (region.x + 8);
-
-					size_t index = 0;
-					double pos = 0.0;
-
-					for (const auto& advance : font(text.text).getXAdvances())
-					{
-						if (posX <= (pos + (advance / 2)))
-						{
-							break;
-						}
-
-						pos += advance;
-						++index;
-					}
-
-					text.cursorPos = index;
-					text.cursorStopwatch.restart();
-					text.leftPressStopwatch.reset();
-					text.rightPressStopwatch.reset();
-
-				# if SIV3D_PLATFORM(WEB)
-					Platform::Web::TextInput::RequestEnableIME();		
-				# endif
-				}
-				else
-				{
-					text.active = false;
-
-				# if SIV3D_PLATFORM(WEB)
-					Platform::Web::TextInput::RequestDisableIME();		
-				# endif
-				}
-			}
-
-			// ショートカットキーによるペースト
-			if (text.active)
-			{
-				text.cursorPos = TextInput::UpdateText(text.text, text.cursorPos, TextInputMode::AllowBackSpaceDelete);
-
-				if ((not editingText) &&
-				# if SIV3D_PLATFORM(MACOS)
-					((KeyCommand + KeyV).down() || (KeyControl + KeyV).down())
-				# else
-					(KeyControl + KeyV).down()
-				# endif
-					)
-				{
-				# if SIV3D_PLATFORM(WEB)
-
-					if (not text.pendingClipboardText.isValid())
-					{
-						text.pendingClipboardText = Platform::Web::Clipboard::GetText();
-					}
-
-				# else
-
-					if (String paste; Clipboard::GetText(paste))
-					{
-						text.text.insert(text.cursorPos, paste);
-						text.cursorPos += paste.size();
-					}
-
 				# endif
 				}
 
-			# if SIV3D_PLATFORM(WEB)
-
-				if (text.pendingClipboardText.isReady())
-				{
-					String paste = text.pendingClipboardText.get();
-					text.text.insert(text.cursorPos, paste);
-					text.cursorPos += paste.size();
-				}
-
-			# endif
-			}
-
-			// [←][→] キーでテキストカーソルを移動
-			// 一定時間押下すると、テキストカーソルが高速に移動
-			if (text.active && enabled && (not editingText))
-			{
-				// [←] キー
-				if ((0 < text.cursorPos)
-					&& (KeyLeft.down() || ((SecondsF{ 0.33 } < KeyLeft.pressedDuration()) && (SecondsF{ 0.06 } < text.leftPressStopwatch))))
-				{
-					--text.cursorPos;
-					text.leftPressStopwatch.restart();
-				}
-
-				// [→] キー
-				if ((text.cursorPos < text.text.size())
-					&& (KeyRight.down() || ((SecondsF{ 0.33 } < KeyRight.pressedDuration()) && (SecondsF{ 0.06 } < text.rightPressStopwatch))))
-				{
-					++text.cursorPos;
-					text.rightPressStopwatch.restart();
-				}
-			}
-
-			if (text.active)
-			{
 				// 最大字数を超えていたら削る
 				if (maxChars && (*maxChars < text.text.size()))
 				{
@@ -980,45 +809,875 @@ namespace s3d
 					text.cursorPos = Min(text.cursorPos, *maxChars);
 				}
 
-				// 文字列に変更があればカーソル点滅をリセット
-				if (text.text != previousText)
+				// 文字列に変更があったかを調べる
+				text.textChanged = (text.text != previousText);
+
+				// 文字列に変更があれば
+				if (text.textChanged)
 				{
+					// カーソル点滅をリセットする
 					text.cursorStopwatch.restart();
 				}
+			}
 
-				// [home] キーでテキストカーソルを先頭へ移動
-				if (KeyHome.down())
+			// テキストボックス
+			const double width = Max(_width, MinTextBoxWidth);
+			const RectF region{ Arg::center = center, Max(width, MinTextBoxWidth), TextBoxHeight };
+
+			// マウスカーソルを IBeam にする
+			if (enabled && Cursor::OnClientRect() && region.mouseOver())
+			{
+				Cursor::RequestStyle(CursorStyle::IBeam);
+			}
+
+			// 入力カーソルのアクティブ / 非アクティブを切り替える
+			if (MouseL.down() && (TextInput::GetEditingText().isEmpty()))
+			{
+				if (enabled && Cursor::OnClientRect() && region.mouseOver())
 				{
-					text.cursorPos = 0;
-					text.cursorStopwatch.restart();
-				}
+					text.active = true;
+					text.resetStopwatches();
 
-				// [end] キーでテキストカーソルを末尾へ移動
-				if (KeyEnd.down())
-				{
-					text.cursorPos = text.text.length();
-					text.cursorStopwatch.restart();
-				}
-
-				// [tab] キーで入力カーソルを非アクティブに
-				{
-					const String raw = TextInput::GetRawInput();
-					text.tabKey = raw.includes(U'\t');
-					text.enterKey = raw.includes(U'\r');
-
-					if (text.tabKey || text.enterKey)
+					// カーソルの位置を計算する
 					{
-						text.active = false;
+						const double posX = (Cursor::PosF().x - (region.x + 8));
+						size_t index = 0;
+						double pos = 0.0;
 
-					# if SIV3D_PLATFORM(WEB)					
-						Platform::Web::TextInput::RequestDisableIME();					
+						for (const auto& advance : font(text.text).getXAdvances())
+						{
+							if (posX <= (pos + (advance / 2)))
+							{
+								break;
+							}
+
+							pos += advance;
+							++index;
+						}
+
+						text.cursorPos = index;
+					}
+				}
+				else
+				{
+					text.active = false;
+				}
+			}
+
+			// テキストカーソルを更新する
+			if (text.text)
+			{
+				if (text.active && enabled && (not editingText))
+				{
+					// キーでテキストカーソルを移動させる
+					// 一定時間押下すると、テキストカーソルが高速に移動
+
+					// テキストカーソルを先頭へ移動させる
+					if ((KeyControl + KeyHome).down()) // [ctrl] + [home]: 全体の先頭へ
+					{
+						text.cursorPos = 0;
+						text.cursorStopwatch.restart();
+					}
+					else if (
+					# if SIV3D_PLATFORM(MACOS)
+						((KeyControl + KeyA).down() || KeyHome.down())
+					# else
+						KeyHome.down()
 					# endif
+						) // [home]: 行頭へ
+					{
+						text.cursorPos = 0;
+						text.cursorStopwatch.restart();
+					}
+
+					// テキストカーソルを末尾へ移動させる
+					if ((KeyControl + KeyEnd).down()) // [ctrl] + [end]: 全体の末尾へ
+					{
+						text.cursorPos = text.text.size();
+						text.cursorStopwatch.restart();
+					}
+					else if (
+					# if SIV3D_PLATFORM(MACOS)
+						((KeyControl + KeyE).down() || KeyEnd.down())
+					# else
+						KeyEnd.down()
+					# endif
+						) // [end]: 行末へ
+					{
+						text.cursorPos = text.text.size();
+						text.cursorStopwatch.restart();
+					}
+
+					// [←] キー
+					if ((0 < text.cursorPos)
+						&& (KeyLeft.down() || ((SecondsF{ 0.33 } < KeyLeft.pressedDuration()) && (SecondsF{ 0.06 } < text.leftPressStopwatch))))
+					{
+						--text.cursorPos;
+						text.leftPressStopwatch.restart();
+					}
+
+					// [→] キー
+					if ((text.cursorPos < text.text.size())
+						&& (KeyRight.down() || ((SecondsF{ 0.33 } < KeyRight.pressedDuration()) && (SecondsF{ 0.06 } < text.rightPressStopwatch))))
+					{
+						++text.cursorPos;
+						text.rightPressStopwatch.restart();
 					}
 				}
 			}
 
-			text.textChanged = (text.text != previousText);
+			if (text.active && enabled && (not editingText))
+			{
+				// [tab][enter] キーで入力カーソルを非アクティブに
+				{
+					const String raw = TextInput::GetRawInput();
+					text.tabKey = raw.contains(U'\t');
+					text.enterKey = raw.contains(U'\r');
 
+					if (text.tabKey || text.enterKey)
+					{
+						text.active = false;
+					}
+				}
+			}
+
+			// 描画
+			{
+				const Vec2 textPos{ (region.x + 8), (center.y - font.height() / 2 + FontYOffset - 0.5) };
+
+				if (enabled)
+				{
+					if (text.active)
+					{
+						region
+							.draw()
+							.drawFrame(0.0, 1.5, ColorF{ 0.35, 0.7, 1.0, 0.75 })
+							.drawFrame(2.5, 0.0, ColorF{ 0.35, 0.7, 1.0 });
+					}
+					else
+					{
+						region
+							.draw()
+							.drawFrame(2.0, 0.0, ColorF{ 0.5 });
+					}
+				}
+				else
+				{
+					region
+						.draw(ColorF{ 0.9 })
+						.drawFrame(2.0, 0.0, ColorF{ 0.67 });
+				}
+
+				{
+					const ColorF textColor = GetTextColor(enabled);
+					const auto& pixelShader = Font::GetPixelShader(font.method());
+					
+					double cursorPosX = textPos.x;
+					Vec2 editingTextPos = textPos;
+
+					// テキストの描画
+					{
+						const ScopedCustomShader2D shader{ pixelShader };
+						Vec2 penPos = textPos;
+						const Array<Glyph> glyphs = font.getGlyphs(text.text);
+
+						for (auto&& [index, glyph] : Indexed(glyphs))
+						{
+							const double xAdvance = glyph.xAdvance;
+							const Vec2 glyphPos = (penPos + glyph.getOffset());
+
+							glyph.texture.draw(glyphPos, textColor);		
+							penPos.x += xAdvance;
+
+							// テキストカーソルの位置の計算を計算する
+							if (text.active && (text.cursorPos == (index + 1)))
+							{
+								cursorPosX = penPos.x;
+								editingTextPos = penPos;
+							}
+						}
+					}
+
+					if (editingText)
+					{
+						// 変換テキストとその領域の取得
+						const Array<Glyph> editingGlyphs = font.getGlyphs(editingText);
+						Array<Vec2> editingGlyphPositions(editingGlyphs.size());
+						{
+							Vec2 penPos = editingTextPos;
+
+							for (size_t i = 0; i < editingGlyphs.size(); ++i)
+							{
+								const auto& glyph = editingGlyphs[i];
+								editingGlyphPositions[i] = (penPos + glyph.getOffset());
+								penPos.x += glyph.xAdvance;
+							}
+						}
+
+						// 変換テキスト背景の描画
+						if (editingGlyphs)
+						{
+							const auto& firstGlyph = editingGlyphs.front();
+							const auto& lastGlyph = editingGlyphs.back();
+							const Vec2 pos = (editingGlyphPositions.front() - firstGlyph.getOffset());
+							const double w = ((editingGlyphPositions.back().x - lastGlyph.getOffset().x + lastGlyph.xAdvance) - pos.x);
+							RectF{ pos, w, fontHeight }.draw(TextAreaEditingTextBackgroundColor);
+
+							// 変換テキストの選択範囲の描画
+							{
+							# if SIV3D_PLATFORM(WINDOWS)
+
+								const std::pair<int32, int32> editingTarget = Platform::Windows::TextInput::GetCursorIndex();
+
+							# elif SIV3D_PLATFORM(WEB)
+
+								const std::pair<int32, int32> editingTarget = Platform::Web::TextInput::GetCandicateCursorIndex();
+
+							# else
+
+								const std::pair<int32, int32> editingTarget{ -1, 0 };
+
+							# endif
+
+								if (editingTarget.second && ((editingTarget.first + editingTarget.second) <= editingGlyphPositions.size()))
+								{
+									const int32 firstIndex = editingTarget.first;
+									const int32 lastIndex = (editingTarget.first + editingTarget.second - 1);
+									const double x0 = editingGlyphPositions[firstIndex].x;
+									const double x1 = editingGlyphPositions[lastIndex].x + editingGlyphs[lastIndex].xAdvance;
+									RectF{ x0, (pos.y + fontHeight - 2), (x1 - x0), 2 }.draw(ActiveTextColor);
+								}
+							}
+						}
+
+						// 変換テキストの描画
+						{
+							const ScopedCustomShader2D shader{ pixelShader };
+
+							for (size_t i = 0; i < editingGlyphs.size(); ++i)
+							{
+								const auto& glyph = editingGlyphs[i];
+								glyph.texture.draw(editingGlyphPositions[i], textColor);
+							}
+						}
+					}
+
+					// テキスト入力カーソルの描画
+					if (text.active && enabled)
+					{
+						const bool showCursor = (text.cursorStopwatch.ms() % 1200 < 600)
+							|| (text.leftPressStopwatch.isRunning() && (text.leftPressStopwatch < SecondsF{ 0.5 }))
+							|| (text.rightPressStopwatch.isRunning() && (text.rightPressStopwatch < SecondsF{ 0.5 }));
+
+						if (showCursor)
+						{
+							const RectF cursor(Arg::leftCenter(Vec2{ cursorPosX, region.center().y }.asPoint()), 1, 26);
+							cursor.draw(Palette::Black);
+						}
+					}
+				}
+			}
+
+		# if SIV3D_PLATFORM(WEB)
+
+			Platform::Web::TextInput::SetFocusToTextInput(text.active);		
+				
+			if (text.active && not editingText)
+			{
+				if (text.lastCursorPos != text.cursorPos)
+				{
+					Platform::Web::TextInput::SyncronizeText(text.text);
+					Platform::Web::TextInput::SetCursorIndex(text.cursorPos);		
+				}
+				else if (auto currentCursorPos = Platform::Web::TextInput::GetCursorIndex(); text.lastCursorPos != currentCursorPos)
+				{
+					text.cursorPos = currentCursorPos;
+					text.cursorStopwatch.restart();
+				}
+
+				text.lastCursorPos = text.cursorPos;
+			}
+
+		# endif
+
+			return text.textChanged;
+		}
+
+		RectF TextAreaRegion(const Vec2& pos, const SizeF& size)
+		{
+			return{ pos, Max(size.x, MinTextBoxWidth), Max(size.y, MinTextAreaHeight) };
+		}
+
+		RectF TextAreaRegionAt(const Vec2& center, const SizeF& size)
+		{
+			return{ Arg::center = center, Max(size.x, MinTextBoxWidth), Max(size.y, MinTextAreaHeight) };
+		}
+
+		bool TextArea(TextAreaEditState& text, const Vec2& pos, const SizeF& size, const size_t maxChars, const bool enabled)
+		{
+			const double width = Max(size.x, MinTextBoxWidth);
+			const double height = Max(size.y, MinTextAreaHeight);
+			return TextAreaAt(text, pos.movedBy((width * 0.5), (height * 0.5)), SizeF{ width, height }, maxChars, enabled);
+		}
+
+		bool TextAreaAt(TextAreaEditState& text, const Vec2& center, const SizeF& size, const size_t maxChars, const bool enabled)
+		{
+			text.cursorPos = Min(text.cursorPos, text.text.size());
+
+			const Font& font = SimpleGUI::GetFont();
+			const int32 fontHeight = font.height();
+
+			const String previousText = text.text;
+			const String editingText = ((text.active && enabled) ? TextInput::GetEditingText() : U"");
+
+			// テキストを更新する
+			{
+				if (text.active && enabled)
+				{
+					// text.text を更新する
+					text.cursorPos = TextInput::UpdateText(text.text, text.cursorPos, TextInputMode::AllowEnterTabBackSpaceDelete);
+
+				# if not SIV3D_PLATFORM(WEB)
+
+					// ショートカットキーによるペースト
+					if ((not editingText) &&
+					# if SIV3D_PLATFORM(MACOS)
+						((KeyCommand + KeyV).down() || (KeyControl + KeyV).down())
+					# else
+						(KeyControl + KeyV).down()
+					# endif
+						)
+					{
+						if (String paste; Clipboard::GetText(paste))
+						{
+							text.text.insert(text.cursorPos, paste);
+							text.cursorPos += paste.size();
+						}
+					}
+
+				# endif
+				}
+
+				// 最大字数を超えていたら削る
+				if (maxChars < text.text.size())
+				{
+					text.text.resize(maxChars);
+					text.cursorPos = Min(text.cursorPos, maxChars);
+				}
+
+				// 文字列に変更があったかを調べる
+				text.textChanged = (text.text != previousText);
+
+				// 文字列に変更があれば
+				if (text.textChanged)
+				{
+					// カーソル点滅をリセットする
+					text.cursorStopwatch.restart();
+
+					// グリフを再構築する
+					text.rebuildGlyphs();
+				}
+			}
+
+			// テキストエリア
+			const RectF region{ Arg::center = center, Max(size.x, MinTextBoxWidth), Max(size.y, MinTextAreaHeight) };
+
+			// 入力カーソルのアクティブ / 非アクティブを切り替える
+			if (MouseL.down() && (TextInput::GetEditingText().isEmpty()))
+			{
+				if (Cursor::OnClientRect() && region.mouseOver())
+				{
+					text.active = true;
+					text.resetStopwatches();
+				}
+				else
+				{
+					text.active = false;
+				}
+			}
+
+			const RectF textRenderRegion = region.stretched(-2, -(6 + TextAreaScrollBarWidth), -2, -8);
+			const double textRenderRegionRightX = textRenderRegion.rightX();
+			const double textRenderRegionBottomY = textRenderRegion.bottomY();
+
+			double textCursorLineX = 0.0, textCursorLineY0 = 0.0, textCursorLineY1 = 0.0;
+			if (text.active && (text.cursorPos == 0))
+			{
+				textCursorLineX = textRenderRegion.x;
+				textCursorLineY0 = (textRenderRegion.y + text.scrollY);
+				textCursorLineY1 = (textCursorLineY0 + fontHeight);
+			}
+
+			Vec2 editingTextPos = textRenderRegion.pos;
+			double newScrollY = Min(text.scrollY + (region.mouseOver() ? (Mouse::Wheel() * -fontHeight * 0.5) : 0.0), 0.0);
+			double scrollOffset = 0.0;
+			uint16 maxRow = 0;
+			{
+				text.glyphPositions.clear();
+				text.clipInfos.clear();
+
+				Vec2 penPos = textRenderRegion.pos;
+				uint16 row = 0;
+				uint16 column = 1;
+
+				// 入力した文字列の各文字と、位置と描画領域を記録する。
+				for (auto&& [index, glyph] : Indexed(text.glyphs))
+				{
+					// 改行文字であるか
+					bool isLF = false;
+
+					// 改行が発生したか
+					bool isLineBreak = false;
+
+					// 改行の場合、描画位置を下にずらす
+					if (glyph.codePoint == U'\n')
+					{
+						isLF = true;
+						penPos.x = textRenderRegion.x;
+						penPos.y += fontHeight;
+						column = 0;
+						maxRow = ++row;
+					}
+
+					const double xAdvance = glyph.xAdvance;
+
+					Vec2 glyphPos = penPos.movedBy(0, text.scrollY);
+					{
+						// テキストがテキスト描画領域右端からはみ出る場合、テキストを枠内に収めるようにテキストを折り返す
+						if (textRenderRegionRightX < (glyphPos.x + xAdvance))
+						{
+							penPos.x = textRenderRegion.x;
+							penPos.y += fontHeight;
+							isLineBreak = true;
+							column = 1;
+							maxRow = ++row;
+						}
+
+						// テキストの描画位置のオフセットを決定する
+						if ((index + 1) == text.cursorPos)
+						{
+							const double d1 = ((penPos.y + fontHeight + newScrollY) - textRenderRegionBottomY);
+							const double d2 = (textRenderRegion.y - (penPos.y + newScrollY));
+
+							if (0.0 < d1)
+							{
+								scrollOffset = -d1;
+							}
+							else if (0.0 < d2)
+							{
+								scrollOffset = d2;
+							}
+						}
+
+						glyphPos = (penPos + glyph.getOffset() + Vec2{ 0, text.scrollY });
+					}
+
+					// グリフのクリップ領域（描画矩形）を決める
+					RectF clipRect{ 0 };
+					{
+						// x 方向のクリップを決める
+						if (InRange(glyphPos.x, (textRenderRegion.x - xAdvance), textRenderRegion.x))
+						{
+							clipRect.x = textRenderRegion.x;
+							clipRect.w = ((glyphPos.x + xAdvance - textRenderRegion.x) - glyph.getOffset().x);
+						}
+						else if (InRange(glyphPos.x, textRenderRegion.x, (textRenderRegionRightX - xAdvance)))
+						{
+							clipRect.x = glyphPos.x;
+							clipRect.w = (xAdvance - glyph.getOffset().x);
+						}
+						else if (InRange(glyphPos.x, (textRenderRegionRightX - xAdvance), textRenderRegionRightX))
+						{
+							clipRect.x = glyphPos.x;
+							clipRect.w = ((textRenderRegionRightX - glyphPos.x) - glyph.getOffset().x);
+						}
+
+						// y 方向のクリップを決める
+						if (InRange(glyphPos.y, (textRenderRegion.y - fontHeight), textRenderRegion.y))
+						{
+							clipRect.y = textRenderRegion.y;
+							clipRect.h = (glyphPos.y + fontHeight - textRenderRegion.y);
+						}
+						else if (InRange(glyphPos.y, textRenderRegion.y, (textRenderRegion.y + size.y - fontHeight)))
+						{
+							clipRect.y = glyphPos.y;
+							clipRect.h = fontHeight;
+						}
+						else if (InRange(glyphPos.y, (textRenderRegionBottomY - fontHeight), textRenderRegionBottomY))
+						{
+							clipRect.y = glyphPos.y;
+							clipRect.h = (textRenderRegionBottomY - glyphPos.y);
+						}
+					}
+
+					// テキストエリアの範囲内にある文字のみ描画対象に加える。
+					if (InRange(glyphPos.x, (textRenderRegion.x - xAdvance), textRenderRegionRightX)
+							&& InRange(glyphPos.y, (textRenderRegion.y - glyph.yAdvance), (textRenderRegionBottomY + fontHeight - glyph.yAdvance)))
+					{
+						if (isLF)
+						{
+							if (text.clipInfos)
+							{
+								text.clipInfos.back().isEndOfLine = true;
+							}
+
+							text.clipInfos.push_back({ glyphPos, RectF::Empty(), static_cast<uint32>(index), false, false });
+						}
+						else
+						{
+							const bool isEndOfText = (index == (text.glyphs.size() - 1));
+
+							if (isLineBreak && text.clipInfos)
+							{
+								text.clipInfos.back().isEndOfLine = true;
+							}
+
+							text.clipInfos.push_back({ glyphPos, clipRect, static_cast<uint32>(index), isEndOfText, false });
+						}
+					}
+
+					{
+						text.glyphPositions.emplace_back(row, column);
+						++column;
+					}
+
+					// テキストカーソルの位置の計算を計算する
+					if (text.active && (text.cursorPos == (index + 1)))
+					{
+						double yBegin = 0.0, yEnd = 0.0;
+
+						if ((penPos.y + text.scrollY) < textRenderRegion.y)
+						{
+							yBegin = textRenderRegion.y;
+						}
+						else
+						{
+							yBegin = (penPos.y + text.scrollY);
+						}
+
+						if (textRenderRegionBottomY < (penPos.y + fontHeight + text.scrollY))
+						{
+							yEnd = textRenderRegionBottomY;
+						}
+						else
+						{
+							yEnd = (penPos.y + fontHeight + text.scrollY);
+						}
+
+						if ((textRenderRegionRightX < (glyphPos.x + xAdvance))
+							|| ((glyphPos.x + xAdvance) < textRenderRegion.x))
+						{
+							yBegin = 0.0;
+							yEnd = 0.0;
+						}
+
+						textCursorLineX = (glyphPos.x + (isLF ? 0 : clipRect.w));
+						textCursorLineY0 = yBegin;
+						textCursorLineY1 = yEnd;
+
+						editingTextPos = Vec2{ (glyphPos.x + (isLF ? 0 : clipRect.w)), (penPos.y + text.scrollY) };
+					}
+
+					if (isLF)
+					{
+						continue;
+					}
+
+					penPos.x += xAdvance;
+				}
+
+				// テキストカーソルの位置の計算を計算する
+				if (text.active && (text.cursorPos == 0))
+				{
+					double yBegin = 0.0, yEnd = 0.0;
+
+					if ((textRenderRegion.y + text.scrollY) < textRenderRegion.y)
+					{
+						yBegin = textRenderRegion.y;
+					}
+					else
+					{
+						yBegin = (textRenderRegion.y + text.scrollY);
+					}
+
+					if (textRenderRegionBottomY < (textRenderRegion.y + fontHeight + text.scrollY))
+					{
+						yEnd = textRenderRegionBottomY;
+					}
+					else
+					{
+						yEnd = (textRenderRegion.y + fontHeight + text.scrollY);
+					}
+
+					textCursorLineX = textRenderRegion.x;
+					textCursorLineY0 = yBegin;
+					textCursorLineY1 = yEnd;
+
+					editingTextPos = Vec2{ textRenderRegion.x, (textRenderRegion.y + text.scrollY) };
+				}
+			}
+
+			// テキストカーソルを更新する
+			if (text.glyphPositions)
+			{
+				if (text.refreshScroll)
+				{
+					if (text.cursorPos == 0)
+					{
+						newScrollY = 0.0;
+					}
+					else
+					{
+						newScrollY = (text.scrollY + scrollOffset);
+					}
+
+					text.refreshScroll = false;
+				}
+
+				text.refreshScroll |= (text.textChanged || editingText);
+
+				if (text.active && enabled && (not editingText))
+				{
+					// キーでテキストカーソルを移動させる
+					// 一定時間押下すると、テキストカーソルが高速に移動
+
+					// テキストカーソルを先頭へ移動させる
+					if ((KeyControl + KeyHome).down()) // [ctrl] + [home]: 全体の先頭へ
+					{
+						text.cursorPos = 0;
+						text.cursorStopwatch.restart();
+						text.refreshScroll = true;
+					}
+					else if (
+					# if SIV3D_PLATFORM(MACOS)
+						((KeyControl + KeyA).down() || KeyHome.down())
+					# else
+						KeyHome.down()
+					# endif
+						) // [home]: 行頭へ
+					{
+						for (int32 i = (static_cast<int32>(text.cursorPos) - 1); 0 <= i; --i)
+						{
+							if (text.glyphs[i].codePoint == '\n')
+							{
+								text.cursorPos = (i + 1);
+								text.cursorStopwatch.restart();
+								text.refreshScroll = true;
+								break;
+							}
+							else if (i == 0)
+							{
+								text.cursorPos = 0;
+								text.cursorStopwatch.restart();
+								text.refreshScroll = true;
+								break;
+							}
+						}
+					}
+
+					// テキストカーソルを末尾へ移動させる
+					if ((KeyControl + KeyEnd).down()) // [ctrl] + [end]: 全体の末尾へ
+					{
+						text.cursorPos = text.text.size();
+						text.cursorStopwatch.restart();
+						text.refreshScroll = true;
+					}
+					else if (
+					# if SIV3D_PLATFORM(MACOS)
+						((KeyControl + KeyE).down() || KeyEnd.down())
+					# else
+						KeyEnd.down()
+					# endif
+						) // [end]: 行末へ
+					{
+						for (size_t i = text.cursorPos; i <= text.text.size(); ++i)
+						{
+							if (i == text.text.size())
+							{
+								text.cursorPos = text.text.size();
+								text.cursorStopwatch.restart();
+								text.refreshScroll = true;
+								break;
+							}
+							else if (text.glyphs[i].codePoint == '\n')
+							{
+								text.cursorPos = i;
+								text.cursorStopwatch.restart();
+								text.refreshScroll = true;
+								break;
+							}
+						}
+					}
+
+					// [←] キー
+					if ((0 < text.cursorPos)
+						&& (KeyLeft.down() || ((SecondsF{ 0.33 } < KeyLeft.pressedDuration()) && (SecondsF{ 0.06 } < text.leftPressStopwatch))))
+					{
+						--text.cursorPos;
+						text.leftPressStopwatch.restart();
+						text.refreshScroll = true;
+					}
+
+					// [→] キー
+					if ((text.cursorPos < text.text.size())
+						&& (KeyRight.down() || ((SecondsF{ 0.33 } < KeyRight.pressedDuration()) && (SecondsF{ 0.06 } < text.rightPressStopwatch))))
+					{
+						++text.cursorPos;
+						text.rightPressStopwatch.restart();
+						text.refreshScroll = true;
+					}
+
+					// [↑] キーでテキストカーソルを上に移動させる
+					if (KeyUp.down() || ((SecondsF{ 0.33 } < KeyUp.pressedDuration()) && (SecondsF{ 0.06 } < text.upPressStopwatch)))
+					{
+						const int32 currentRow = (text.cursorPos ? text.glyphPositions[text.cursorPos - 1].first : 0);
+						const int32 currentColumn = (text.cursorPos ? text.glyphPositions[text.cursorPos - 1].second : 0);
+
+						if (0 < currentRow)
+						{
+							for (int32 i = (static_cast<int32>(text.cursorPos) - 1); 0 <= i; --i)
+							{
+								if (i == 0)
+								{
+									text.cursorPos = 0;
+									break;
+								}
+
+								const auto& glyphPosition = text.glyphPositions[i - 1];
+								const int32 row = glyphPosition.first;
+								const int32 column = glyphPosition.second;
+
+								if (row < currentRow)
+								{
+									if ((row + 1) < currentRow)
+									{
+										text.cursorPos = (i + 1);
+										break;
+									}
+
+									if (column <= currentColumn)
+									{
+										text.cursorPos = i;
+										break;
+									}
+								}
+							}
+						}
+
+						text.upPressStopwatch.restart();
+						text.refreshScroll = true;
+					}
+
+					// [↓] キーでテキストカーソルを下に移動させる
+					if (KeyDown.down() || ((SecondsF{ 0.33 } < KeyDown.pressedDuration()) && (SecondsF{ 0.06 } < text.downPressStopwatch)))
+					{
+						const int32 maxCursorIndex = static_cast<int32>(text.glyphPositions.size());
+						const int32 currentRow = (text.cursorPos ? text.glyphPositions[text.cursorPos - 1].first : 0);
+						const int32 currentColumn = (text.cursorPos ? text.glyphPositions[text.cursorPos - 1].second : 0);
+
+						if (currentRow < (text.glyphPositions.back().first))
+						{
+							for (int32 i = (static_cast<int32>(text.cursorPos) + 1); i <= maxCursorIndex; ++i)
+							{
+								const auto& glyphPosition = text.glyphPositions[i - 1];
+								const int32 row = glyphPosition.first;
+								const int32 column = glyphPosition.second;
+
+								if (currentRow < row)
+								{
+									if ((currentRow + 1) < row)
+									{
+										text.cursorPos = (i - 1);
+										break;
+									}
+
+									if (currentColumn <= column)
+									{
+										text.cursorPos = i;
+										break;
+									}
+								}
+
+								if (i == maxCursorIndex)
+								{
+									text.cursorPos = maxCursorIndex;
+									break;
+								}
+							}
+						}
+
+						text.downPressStopwatch.restart();
+						text.refreshScroll = true;
+					}
+				}
+			}
+
+			// テキストエリアクリックでテキストカーソルを移動させる
+			if (const Vec2 cursorPos = Cursor::PosF();
+				enabled && textRenderRegion.intersects(cursorPos) && MouseL.down())
+			{
+				if (text.clipInfos)
+				{
+					text.cursorPos = text.clipInfos.front().index;
+				}
+			
+				// 最後の行の文字をマーク
+				if (1 <= text.clipInfos.size())
+				{
+					auto it = text.clipInfos.rbegin();
+
+					it->isLastLine = true;
+					it->isEndOfLine = true;
+
+					++it;
+
+					for (; it != text.clipInfos.rend(); ++it)
+					{
+						if (it->isEndOfLine)
+						{
+							break;
+						}
+
+						it->isLastLine = true;
+					}
+				}
+
+				// カーソルの移動先を求める
+				for (const auto& clipInfo : text.clipInfos)
+				{
+					const auto& glyph = text.glyphs[clipInfo.index];
+
+					const Vec2 penPos = (clipInfo.pos - glyph.getOffset());
+
+					RectF rect{ penPos, glyph.xAdvance, fontHeight };
+
+					if (clipInfo.isEndOfLine)
+					{
+						rect.w = (textRenderRegionRightX - rect.x);
+					}
+
+					if (clipInfo.isLastLine)
+					{
+						rect.h = (textRenderRegionBottomY - rect.y);
+					}
+
+					if (rect.intersects(cursorPos))
+					{
+						text.cursorPos = (clipInfo.index + ((glyph.xAdvance / 2) <= (cursorPos.x - penPos.x)));
+						text.cursorStopwatch.restart();
+						break;
+					}
+				}
+			}
+
+			const double maxScroll = Min(-((maxRow + 1.5) * fontHeight - region.h), 0.0);
+			text.scrollY = Clamp(newScrollY, maxScroll, 0.0);
+
+			//描画
+			detail::TextAreaDraw(text, font, fontHeight, region, textRenderRegion, textRenderRegionBottomY,
+									textCursorLineX, textCursorLineY0, textCursorLineY1,
+									editingText, editingTextPos, maxScroll, enabled);
+	
 			return text.textChanged;
 		}
 
@@ -1198,7 +1857,39 @@ namespace s3d
 
 						if (itemRect.leftClicked())
 						{
+							state.active = true;
 							state.selectedItemIndex = itemIndex;
+						}
+					}
+				}
+				
+				if ((not enabled) || (MouseL.down() && not rect.mouseOver()))
+				{
+					state.active = false;
+				}
+
+				if (state.active && state.selectedItemIndex)
+				{
+					if ((0 < *state.selectedItemIndex) &&
+						(KeyUp.down() || ((SecondsF{ 0.33 } < KeyUp.pressedDuration()) && (SecondsF{ 0.06 } < state.upPressStopwatch))))
+					{
+						--(*state.selectedItemIndex);
+						state.upPressStopwatch.restart();
+
+						if (hasScrollBar  && (static_cast<int32>(*state.selectedItemIndex) < state.scroll))
+						{
+							state.scroll = Max(state.scroll - 1, 0);
+						}
+					}
+					else if (((*state.selectedItemIndex + 1) < state.items.size()) &&
+						(KeyDown.down() || ((SecondsF{ 0.33 } < KeyDown.pressedDuration()) && (SecondsF{ 0.06 } < state.downPressStopwatch))))
+					{
+						++(*state.selectedItemIndex);
+						state.downPressStopwatch.restart();
+
+						if (hasScrollBar && (maxLines <= (static_cast<int32>(*state.selectedItemIndex) - state.scroll)))
+						{
+							state.scroll = Min(state.scroll + 1, static_cast<int32>(state.items.size()) - maxLines);
 						}
 					}
 				}
@@ -1222,9 +1913,9 @@ namespace s3d
 					state.scroll = Min(state.scroll, static_cast<int32>(state.items.size()) - maxLines);
 
 					const RectF innerScrollBarArea = scrollBarArea.stretched(0, -ScrollBarWidth);
-					const int32 scrollBarHeight = static_cast<int32>(innerScrollBarArea.h * (static_cast<double>(maxLines) / state.items.size()));
+					const double scrollBarHeight = (innerScrollBarArea.h * (static_cast<double>(maxLines) / state.items.size()));
 					const int32 scrollBarOffset = static_cast<int32>((innerScrollBarArea.h - scrollBarHeight) * (static_cast<double>(state.scroll) / (state.items.size() - maxLines)));
-					const RectF scrollBar(innerScrollBarArea.pos.movedBy(0, scrollBarOffset), innerScrollBarArea.w, scrollBarHeight);
+					const RectF scrollBar(innerScrollBarArea.pos.movedBy(0, (scrollBarOffset - 3.0)), innerScrollBarArea.w, (scrollBarHeight + 6.0));
 
 					if (state.scrollBarGrabbed && MouseL.up())
 					{
@@ -1322,9 +2013,9 @@ namespace s3d
 								.draw(ColorF{ 0.33 });
 						}
 
-						Triangle{ c.movedBy(0, -ScrollBarWidth * 0.15),
-							c.movedBy(ScrollBarWidth * 0.25, ScrollBarWidth * 0.15),
-							c.movedBy(-ScrollBarWidth * 0.25, ScrollBarWidth * 0.15) }
+						Triangle{ c.movedBy(0, -ScrollBarWidth * 0.22),
+							c.movedBy(ScrollBarWidth * 0.25, ScrollBarWidth * 0.08),
+							c.movedBy(-ScrollBarWidth * 0.25, ScrollBarWidth * 0.08) }
 						.draw(pressed ? ColorF{ 0.85 } : ColorF{ 0.33 });
 					}
 
@@ -1339,16 +2030,16 @@ namespace s3d
 								.draw(ColorF{ 0.33 });
 						}
 
-						Triangle{ c.movedBy(0, ScrollBarWidth * 0.15),
-							c.movedBy(-ScrollBarWidth * 0.25, -ScrollBarWidth * 0.15),
-							c.movedBy(ScrollBarWidth * 0.25, -ScrollBarWidth * 0.15) }
+						Triangle{ c.movedBy(0, ScrollBarWidth * 0.22),
+							c.movedBy(-ScrollBarWidth * 0.25, -ScrollBarWidth * 0.08),
+							c.movedBy(ScrollBarWidth * 0.25, -ScrollBarWidth * 0.08) }
 						.draw(pressed ? ColorF{ 0.85 } : ColorF{ 0.33 });
 					}
 
 					const RectF innerScrollBarArea = scrollBarArea.stretched(0, -ScrollBarWidth);
-					const int32 scrollBarHeight = static_cast<int32>(innerScrollBarArea.h * (static_cast<double>(maxLines) / state.items.size()));
+					const double scrollBarHeight = (innerScrollBarArea.h * (static_cast<double>(maxLines) / state.items.size()));
 					const int32 scrollBarOffset = static_cast<int32>((innerScrollBarArea.h - scrollBarHeight) * (static_cast<double>(state.scroll) / (state.items.size() - maxLines)));
-					const RectF scrollBar(innerScrollBarArea.pos.movedBy(0, scrollBarOffset), innerScrollBarArea.w, scrollBarHeight);
+					const RectF scrollBar(innerScrollBarArea.pos.movedBy(0, (scrollBarOffset - 3.0)), innerScrollBarArea.w, (scrollBarHeight + 6.0));
 
 					scrollBar
 						.stretched(-1, 0)
@@ -1357,6 +2048,269 @@ namespace s3d
 			}
 
 			return (oldState != state.selectedItemIndex);
+		}
+
+		RectF IMECandidateWindowRegion(const Vec2& pos)
+		{
+		# if SIV3D_PLATFORM(WINDOWS)
+
+			const auto& cadidateState = Platform::Windows::TextInput::GetCandidateState();
+
+			if (not cadidateState.candidates)
+			{
+				return{ pos, 0 };
+			}
+
+			const Font& font = GetFont();
+
+			const double boxWidth = [&font, &cadidateState]()
+				{
+					double boxWidth = 0.0;
+
+					for (const auto& canditate : cadidateState.candidates)
+					{
+						boxWidth = Max<double>(boxWidth, font(canditate).region().w);
+					}
+
+					return boxWidth;
+				}() + (CandidatePadding * 2 + CandidateMinimapWidth);
+
+				const double candidateItemHeight = (font.height() + CandidateMargin);
+
+				return{ pos, boxWidth, (candidateItemHeight * cadidateState.candidates.size()) };
+
+		# else
+
+			return{ pos, 0 };
+
+		# endif
+		}
+
+		void IMECandidateWindow([[maybe_unused]] const Vec2& pos)
+		{
+		# if SIV3D_PLATFORM(WINDOWS)
+
+			const auto& cadidateState = Platform::Windows::TextInput::GetCandidateState();
+
+			if (not cadidateState.candidates)
+			{
+				return;
+			}
+
+			const Font& font = GetFont();
+
+			const double boxWidth = [&font, &cadidateState]()
+				{
+					double boxWidth = 0.0;
+
+					for (const auto& canditate : cadidateState.candidates)
+					{
+						boxWidth = Max<double>(boxWidth, font(canditate).region().w);
+					}
+
+					return boxWidth;
+				}() + (CandidatePadding * 2 + CandidateMinimapWidth);
+
+			const double candidateItemHeight = (font.height() + CandidateMargin);
+
+			RectF{ pos, boxWidth, (candidateItemHeight * cadidateState.candidates.size()) }
+				.drawShadow(Vec2{ 0, 2 }, 8)
+				.draw(CandidateWindowColor)
+				.drawFrame(1, 0, CandidateWindowFrameColor);
+
+			{
+				int32 currentIndex = cadidateState.pageStartIndex;
+
+				for (const auto& candidate : cadidateState.candidates)
+				{
+					const bool selected = (currentIndex == cadidateState.selectedIndex);
+
+					const Vec2 itemPos{ pos.x, (pos.y + (currentIndex - cadidateState.pageStartIndex) * candidateItemHeight) };
+
+					if (selected)
+					{
+						RectF{ itemPos, (boxWidth - CandidateMinimapWidth), candidateItemHeight }
+							.stretched(-1, 0)
+							.draw(CandidateSelectedBackgroundColor);
+					}
+
+					if (candidate)
+					{
+						font(candidate).draw(itemPos.movedBy(CandidatePadding, (CandidateMargin * 0.5 - 1.0)), CandidateTextColor);
+					}
+
+					++currentIndex;
+				}
+			}
+
+			// minimap
+			{
+				if (cadidateState.pageStartIndex != 0)
+				{
+					const Vec2 scrollPos{ (pos.x + boxWidth - CandidateMinimapWidth * 0.5 - 1), (pos.y + 0 * candidateItemHeight + 11) };
+					scrollPos.asCircle(3.5).draw(CandidateMinimapColor);
+					scrollPos.movedBy(0, 8).asCircle(2.8).draw(CandidateMinimapColor);
+					scrollPos.movedBy(0, 15).asCircle(2.25).draw(CandidateMinimapColor);
+				}
+
+				if ((cadidateState.pageStartIndex + cadidateState.pageSize) != cadidateState.count)
+				{
+					const Vec2 scrollPos{ (pos.x + boxWidth - CandidateMinimapWidth * 0.5 - 1), (pos.y + cadidateState.pageSize * candidateItemHeight - 9) };
+					scrollPos.asCircle(3.5).draw(CandidateMinimapColor);
+					scrollPos.movedBy(0, -8).asCircle(2.8).draw(CandidateMinimapColor);
+					scrollPos.movedBy(0, -15).asCircle(2.25).draw(CandidateMinimapColor);
+				}
+			}
+
+		# endif
+		}
+
+		namespace detail
+		{
+			static void TextAreaDraw(const TextAreaEditState& text, const Font& font, const int32 fontHeight, const RectF& region,
+				const RectF& textRenderRegion, const double textRenderRegionBottomY,
+				const double textCursorLineX, const double textCursorLineY0, const double textCursorLineY1,
+				const String& editingText, const Vec2& editingTextPos, const double maxScroll, const bool enabled)
+			{
+				// テキストエリアの描画
+				if (enabled)
+				{
+					if (text.active)
+					{
+						region
+							.draw()
+							.drawFrame(0.0, 1.5, ColorF{ 0.35, 0.7, 1.0, 0.75 })
+							.drawFrame(2.5, 0.0, ColorF{ 0.35, 0.7, 1.0 });
+					}
+					else
+					{
+						region
+							.draw()
+							.drawFrame(2.0, 0.0, ColorF{ 0.5 });
+					}
+				}
+				else
+				{
+					region
+						.draw(ColorF{ 0.9 })
+						.drawFrame(2.0, 0.0, ColorF{ 0.67 });
+				}
+
+				// テキスト入力カーソルの描画
+				if (text.active && enabled)
+				{
+					const bool showCursor = (text.cursorStopwatch.ms() % 1200 < 600)
+						|| (text.leftPressStopwatch.isRunning() && (text.leftPressStopwatch < SecondsF{ 0.5 }))
+						|| (text.rightPressStopwatch.isRunning() && (text.rightPressStopwatch < SecondsF{ 0.5 }))
+						|| (text.upPressStopwatch.isRunning() && (text.upPressStopwatch < SecondsF{ 0.5 }))
+						|| (text.downPressStopwatch.isRunning() && (text.downPressStopwatch < SecondsF{ 0.5 }));
+
+					if (showCursor)
+					{
+						if ((textCursorLineY0 < textRenderRegionBottomY)
+							&& (textRenderRegion.y < textCursorLineY1))
+						{
+							const double x = (Math::Ceil(textCursorLineX) - 0.5);
+							Line{ x, textCursorLineY0, x, textCursorLineY1 }.stretched(-2).draw(1, Palette::Black);
+						}
+					}
+				}
+
+				{
+					const ColorF textColor = GetTextColor(enabled);
+					const auto& pixelShader = Font::GetPixelShader(font.method());
+
+					// テキストの描画
+					{
+						const ScopedCustomShader2D shader{ pixelShader };
+
+						for (const auto& clipInfo : text.clipInfos)
+						{
+							const auto& glyph = text.glyphs[clipInfo.index];
+
+							if ((glyph.codePoint == U'\t') || (glyph.codePoint == U'\n'))
+							{
+								continue;
+							}
+
+							glyph.texture.drawClipped(clipInfo.pos, clipInfo.clipRect, textColor);
+						}
+					}
+
+					if (editingText)
+					{
+						// 変換テキストとその領域の取得
+						const Array<Glyph> editingGlyphs = font.getGlyphs(editingText);
+						Array<Vec2> editingGlyphPositions(editingGlyphs.size());
+						{
+							Vec2 penPos = editingTextPos;
+
+							for (size_t i = 0; i < editingGlyphs.size(); ++i)
+							{
+								const auto& glyph = editingGlyphs[i];
+								editingGlyphPositions[i] = (penPos + glyph.getOffset());
+								penPos.x += glyph.xAdvance;
+							}
+						}
+
+						// 変換テキスト背景の描画
+						if (editingGlyphs)
+						{
+							const auto& firstGlyph = editingGlyphs.front();
+							const auto& lastGlyph = editingGlyphs.back();
+							const Vec2 pos = (editingGlyphPositions.front() - firstGlyph.getOffset());
+							const double w = ((editingGlyphPositions.back().x - lastGlyph.getOffset().x + lastGlyph.xAdvance) - pos.x);
+							RectF{ pos, w, fontHeight }.draw(TextAreaEditingTextBackgroundColor);
+
+							// 変換テキストの選択範囲の描画
+							{
+							# if SIV3D_PLATFORM(WINDOWS)
+
+								const std::pair<int32, int32> editingTarget = Platform::Windows::TextInput::GetCursorIndex();
+
+							# elif SIV3D_PLATFORM(WEB)
+
+								const std::pair<int32, int32> editingTarget = Platform::Web::TextInput::GetCandicateCursorIndex();
+
+							# else
+
+								const std::pair<int32, int32> editingTarget{ -1, 0 };
+
+							# endif
+
+								if (editingTarget.second && ((editingTarget.first + editingTarget.second) <= editingGlyphPositions.size()))
+								{
+									const int32 firstIndex = editingTarget.first;
+									const int32 lastIndex = (editingTarget.first + editingTarget.second - 1);
+									const double x0 = editingGlyphPositions[firstIndex].x;
+									const double x1 = editingGlyphPositions[lastIndex].x + editingGlyphs[lastIndex].xAdvance;
+									RectF{ x0, (pos.y + fontHeight - 2), (x1 - x0), 2 }.draw(ActiveTextColor);
+								}
+							}
+						}
+
+						// 変換テキストの描画
+						{
+							const ScopedCustomShader2D shader{ pixelShader };
+
+							for (size_t i = 0; i < editingGlyphs.size(); ++i)
+							{
+								const auto& glyph = editingGlyphs[i];
+								glyph.texture.draw(editingGlyphPositions[i], textColor);
+							}
+						}
+					}
+				}
+
+				// スクロールバーの描画
+				if (maxScroll)
+				{
+					const RectF scrollRegion = RectF{ textRenderRegion.tr().movedBy(2, 0), TextAreaScrollBarWidth, textRenderRegion.h }.stretched(0, -2);
+					const double scrollBarHeight = Max(((scrollRegion.h / (scrollRegion.h - maxScroll)) * scrollRegion.h), TextAreaScrollBarMinHeight);
+					const double scrollBaroffset = ((scrollRegion.h - scrollBarHeight) * (text.scrollY / maxScroll));
+					RectF{ scrollRegion.pos.x, (scrollRegion.pos.y + scrollBaroffset), scrollRegion.w, scrollBarHeight }.rounded(TextAreaScrollBarWidth * 0.5).draw(TextAreaScrollBarColor);
+				}
+			}
 		}
 	}
 }

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -64,6 +64,9 @@ namespace s3d
 		Vertex2D::IndexType BuildRectFrame(const BufferCreatorFunc& bufferCreator, const FloatRect& rect, float thickness, const Float4& innerColor, const Float4& outerColor);
 
 		[[nodiscard]]
+		Vertex2D::IndexType BuildRectFrameTB(const BufferCreatorFunc& bufferCreator, const FloatRect& rect, float thickness, const Float4& topColor, const Float4& bottomColor);
+
+		[[nodiscard]]
 		Vertex2D::IndexType BuildCircle(const BufferCreatorFunc& bufferCreator, const Float2& center, float r, const Float4& innerColor, const Float4& outerColor, float scale);
 
 		[[nodiscard]]
@@ -73,10 +76,16 @@ namespace s3d
 		Vertex2D::IndexType BuildCirclePie(const BufferCreatorFunc& bufferCreator, const Float2& center, float r, float startAngle, float angle, const Float4& innerColor, const Float4& outerColor, float scale);
 
 		[[nodiscard]]
+		Vertex2D::IndexType BuildCircleArcRoundCap(const BufferCreatorFunc& bufferCreator, const Float2& center, float r, float startAngle, const Float4& startColor, const Float4& endColor, float scale);
+
+		[[nodiscard]]
 		Vertex2D::IndexType BuildCircleArc(const BufferCreatorFunc& bufferCreator, const LineStyle& style, const Float2& center, float rInner, float startAngle, float angle, float thickness, const Float4& innerColor, const Float4& outerColor, float scale);
 
 		[[nodiscard]]
 		Vertex2D::IndexType BuildUncappedCircleArc(const BufferCreatorFunc& bufferCreator, const Float2& center, float rInner, float startAngle, float angle, float thickness, const Float4& innerColor, const Float4& outerColor, float scale);
+
+		[[nodiscard]]
+		Vertex2D::IndexType BuildCircleSegment(const BufferCreatorFunc& bufferCreator, const Float2& center, float r, float startAngle, float angle, const Float4& color, float scale);
 
 		[[nodiscard]]
 		Vertex2D::IndexType BuildEllipse(const BufferCreatorFunc& bufferCreator, const Float2& center, float a, float b, const Float4& innerColor, const Float4& outerColor, float scale);
@@ -94,7 +103,13 @@ namespace s3d
 		Vertex2D::IndexType BuildRoundRect(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const FloatRect& rect, float w, float h, float r, const Float4& color, float scale);
 
 		[[nodiscard]]
+		Vertex2D::IndexType BuildRoundRect(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const FloatRect& rect, float w, float h, float r, const Float4& topColor, const Float4& bottomColor, float scale);
+
+		[[nodiscard]]
 		Vertex2D::IndexType BuildRoundRectFrame(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const RoundRect& inner, const RoundRect& outer, const Float4& color, float scale);
+
+		[[nodiscard]]
+		Vertex2D::IndexType BuildRoundRectFrame(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const RoundRect& inner, const RoundRect& outer, const Float4& topColor, const Float4& bottomColor, float scale);
 
 		[[nodiscard]]
 		Vertex2D::IndexType BuildLineString(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const LineStyle& style, const Vec2* points, size_t size, const Optional<Float2>& offset, float thickness, bool inner, const Float4& color, CloseRing closeRing, float scale);
@@ -140,6 +155,15 @@ namespace s3d
 
 		[[nodiscard]]
 		Vertex2D::IndexType BuildTexturedVertices(const BufferCreatorFunc& bufferCreator, const Vertex2D* vertices, size_t vertexCount, const TriangleIndex* indices, size_t num_triangles);
+
+		[[nodiscard]]
+		Vertex2D::IndexType BuildRectShadow(const BufferCreatorFunc& bufferCreator, const FloatRect& rect, float blur, const Float4& color, bool fill);
+
+		[[nodiscard]]
+		Vertex2D::IndexType BuildCircleShadow(const BufferCreatorFunc& bufferCreator, const Circle& circle, float blur, const Float4& color, float scale);
+
+		[[nodiscard]]
+		Vertex2D::IndexType BuildRoundRectShadow(const BufferCreatorFunc& bufferCreator, const RoundRect& roundRect, float blur, const Float4& color, float scale, bool fill);
 
 		[[nodiscard]]
 		Vertex2D::IndexType BuildTexturedParticles(const BufferCreatorFunc& bufferCreator, const Array<Particle2D>& particles,

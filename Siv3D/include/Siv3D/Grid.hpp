@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -53,27 +53,53 @@ namespace s3d
 		SIV3D_NODISCARD_CXX20
 		Grid(Grid&&) = default;
 
+		/// @brief 二次元配列を作成します。
+		/// @param w 幅
+		/// @param h 高さ
 		SIV3D_NODISCARD_CXX20
 		Grid(size_type w, size_type h);
 
+		/// @brief 二次元配列を作成します。
+		/// @param w 幅
+		/// @param h 高さ
+		/// @param value 要素の初期値
 		SIV3D_NODISCARD_CXX20
 		Grid(size_type w, size_type h, const value_type& value);
 
+		/// @brief 二次元配列を作成します。
+		/// @param size 幅と高さ
 		SIV3D_NODISCARD_CXX20
 		explicit Grid(Size size);
 
+		/// @brief 二次元配列を作成します。
+		/// @param size 幅と高さ
+		/// @param value 要素の初期値
 		SIV3D_NODISCARD_CXX20
 		Grid(Size size, const value_type& value);
 
+		/// @brief 配列から二次元配列を作成します。
+		/// @param w 幅
+		/// @param h 高さ
+		/// @param data 幅 × 高さの要素数を持つ配列
 		SIV3D_NODISCARD_CXX20
 		Grid(size_type w, size_type h, const Array<value_type>& data);
 
+		/// @brief 配列から二次元配列を作成します。
+		/// @param w 幅
+		/// @param h 高さ
+		/// @param data 幅 × 高さの要素数を持つ配列
 		SIV3D_NODISCARD_CXX20
 		Grid(size_type w, size_type h, Array<value_type>&& data);
 
+		/// @brief 配列から二次元配列を作成します。
+		/// @param size 幅と高さ
+		/// @param data 幅 × 高さの要素数を持つ配列
 		SIV3D_NODISCARD_CXX20
 		Grid(Size size, const Array<value_type>& data);
 
+		/// @brief 配列から二次元配列を作成します。
+		/// @param size 幅と高さ
+		/// @param data 幅 × 高さの要素数を持つ配列
 		SIV3D_NODISCARD_CXX20
 		Grid(Size size, Array<value_type>&& data);
 
@@ -128,9 +154,15 @@ namespace s3d
 
 		value_type at(Point pos)&&;
 
+		/// @brief 行の先頭ポインタを返します。
+		/// @param index 行のインデックス
+		/// @return 指定したインデックスの行の先頭ポインタ
 		[[nodiscard]]
 		value_type* operator [](size_t index);
 
+		/// @brief 行の先頭ポインタを返します。
+		/// @param index 行のインデックス
+		/// @return 指定したインデックスの行の先頭ポインタ
 		[[nodiscard]]
 		const value_type* operator [](size_t index) const;
 
@@ -149,9 +181,11 @@ namespace s3d
 		[[nodiscard]]
 		bool inBounds(Point pos) const noexcept;
 
-		[[nodiscard]] pointer data() noexcept;
+		[[nodiscard]]
+		pointer data() noexcept;
 
-		[[nodiscard]] const_pointer data() const noexcept;
+		[[nodiscard]]
+		const_pointer data() const noexcept;
 
 		/// @brief 配列が空であるかを返します。
 		/// @return 配列が空である場合 true, それ以外の場合は false
@@ -197,6 +231,7 @@ namespace s3d
 
 		void shrink_to_fit();
 
+		/// @brief 配列を空にします。
 		void clear() noexcept;
 
 		/// @brief 配列の要素を全て消去し、メモリも解放します。
@@ -331,11 +366,13 @@ namespace s3d
 		template <class Fty, std::enable_if_t<std::is_invocable_v<Fty, Point, Type>>* = nullptr>
 		const Grid& each_index(Fty f) const;
 
+		template <class U>
 		[[nodiscard]]
-		const value_type& fetch(size_type y, size_type x, const value_type& defaultValue) const;
+		value_type fetch(size_type y, size_type x, U&& defaultValue) const;
 
+		template <class U>
 		[[nodiscard]]
-		const value_type& fetch(Point pos, const value_type& defaultValue) const;
+		value_type fetch(Point pos, U&& defaultValue) const;
 
 		Grid& fill(const value_type& value);
 

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -38,17 +38,19 @@ namespace s3d
 
 		std::pair<int32, int32> getCursorIndex() const override;
 
+		const Array<String>& getCandidates() const override;
+
+		const TextInput::CandidateState& getCandidateState() const override;
+
 		//
 		//	Windows
 		//
-
-		const Array<String>& getCandidates() const;
 
 		bool process(UINT msg, WPARAM wParam, LPARAM* lParam);
 
 		void sendEditingText(const String& text, int32 cursorPos, int32 targetLength);
 
-		void sendCandidates(const Array<String>& list);
+		void sendCandidateState(const TextInput::CandidateState& state);
 
 		void sendInputText(const String& text);
 
@@ -70,7 +72,7 @@ namespace s3d
 
 		int32 m_internalTargetLength = 0;
 
-		Array<String> m_internalCandidates;
+		TextInput::CandidateState m_internalCandidateState;
 
 		String m_internalChars;
 		//
@@ -82,7 +84,7 @@ namespace s3d
 
 		int32 m_targetLength = 0;
 
-		Array<String> m_candidates;
+		TextInput::CandidateState m_candidateState;
 
 		String m_chars;
 
@@ -91,6 +93,6 @@ namespace s3d
 
 		mutable bool m_editingTextHandled = true;
 
-		std::unique_ptr<SDL_VideoData> m_pVideo;
+		std::unique_ptr<TextInputData> m_pTextInputData;
 	};
 }

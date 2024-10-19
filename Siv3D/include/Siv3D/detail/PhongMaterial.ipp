@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -18,7 +18,7 @@ namespace s3d
 		, hasDiffuseTexture{ _hasDiffuseTexture.getBool() } {}
 
 	inline PhongMaterial::PhongMaterial(const Material& material, const HasDiffuseTexture _hasDiffuseTexture)
-		: amibientColor{ material.ambient }
+		: ambientColor{ material.ambient }
 		, diffuseColor{ material.diffuse }
 		, specularColor{ material.specular }
 		, emissionColor{ material.emission }
@@ -26,7 +26,7 @@ namespace s3d
 		, hasDiffuseTexture{ _hasDiffuseTexture.getBool() } {}
 
 	inline constexpr PhongMaterialInternal::PhongMaterialInternal(const PhongMaterial& m) noexcept
-		: amibientColor{ m.amibientColor.rgb() }
+		: ambientColor{ m.ambientColor.rgb() }
 		, hasDiffuseTexture{ m.hasDiffuseTexture }
 		, diffuseColor{ m.diffuseColor.toFloat4() }
 		, specularColor{ m.specularColor.rgb() }

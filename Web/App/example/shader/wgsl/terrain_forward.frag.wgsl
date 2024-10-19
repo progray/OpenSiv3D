@@ -1,5 +1,5 @@
-//	Copyright (c) 2008-2022 Ryo Suzuki.
-//	Copyright (c) 2016-2022 OpenSiv3D Project.
+//	Copyright (c) 2008-2023 Ryo Suzuki.
+//	Copyright (c) 2016-2023 OpenSiv3D Project.
 //	Licensed under the MIT License.
 
 //
@@ -19,7 +19,7 @@
 //
 struct PSPerFrameStruct
 {
-	gloablAmbientColor: vec3<f32>,
+	globalAmbientColor: vec3<f32>,
 	sunColor: vec3<f32>,
 	sunDirection: vec3<f32>,
 };
@@ -37,7 +37,7 @@ var<uniform> PSPerView: PSPerViewStruct;
 
 struct PSPerMaterialStruct
 {
-	amibientColor: vec3<f32>,
+	ambientColor: vec3<f32>,
 	hasTexture: u32,
 	diffuseColor: vec4<f32>,
 	specularColor: vec3<f32>,
@@ -95,7 +95,7 @@ fn TerrainTriplanar(worldPos: vec3<f32>, normal: vec3<f32>, uvScale: f32) -> vec
 //
 //	Functions
 //
-@stage(fragment)
+@fragment
 fn main(
 	@builtin(position) Position: vec4<f32>,
 	@location(0) WorldPosition: vec3<f32>,
@@ -108,7 +108,7 @@ fn main(
 	var n: vec3<f32> = FetchNormal(UV);
 	var l: vec3<f32> = lightDirection;
 	var diffuseColor: vec4<f32> = TerrainTriplanar(WorldPosition, n, 0.5);
-	var ambientColor: vec3<f32> = (PSPerMaterial.amibientColor * PSPerFrame.gloablAmbientColor);
+	var ambientColor: vec3<f32> = (PSPerMaterial.ambientColor * PSPerFrame.globalAmbientColor);
 
 	// Diffuse
 	var diffuseReflection: vec3<f32> = CalculateDiffuseReflection(n, l, lightColor, diffuseColor.rgb, ambientColor);

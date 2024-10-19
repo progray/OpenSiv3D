@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -28,6 +28,9 @@ namespace s3d
 		const float m20, const float m21, const float m22, const float m23,
 		const float m30, const float m31, const float m32, const float m33) noexcept
 		: value{ m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33 } {}
+
+	inline Mat4x4::Mat4x4(const float* p) noexcept
+		: value{ p } {}
 
 	inline Mat4x4::Mat4x4(const Quaternion q) noexcept
 		: value{ DirectX::XMMatrixRotationQuaternion(q) } {}

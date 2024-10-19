@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -26,7 +26,7 @@ namespace s3d
 
 		void updateTouchUI(const Vec2& pos, double scale = 1.0, double speed = 1.0);
 
-		void drawTouchUI(const Vec2& pos, double scale = 1.0);
+		void drawTouchUI(const Vec2& pos, double scale = 1.0) const;
 
 		void setView(const Vec3& eyePosition, const Vec3& focusPosition, const Vec3& upDirection = Vec3{ 0, 1, 0 }) noexcept;
 

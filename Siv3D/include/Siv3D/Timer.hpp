@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -167,6 +167,18 @@ namespace s3d
 		/// @return 残り時間 [マイクロ秒]
 		[[nodiscard]]
 		double usF() const;
+
+		/// @brief 残り時間を [秒] で返します。小数点以下は切り上げられます。
+		/// @remark 例えば、残り 2.1 秒の場合は 3 を返します
+		/// @return 残り時間 [秒]
+		[[nodiscard]]
+		int32 s_ceil() const;
+
+		/// @brief 残り時間を [秒] で返します。小数点以下は切り上げられます。
+		/// @remark 例えば、残り 2.1 秒の場合は 3 を返します
+		/// @return 残り時間 [秒]
+		[[nodiscard]]
+		int64 s64_ceil() const;
 
 		/// @brief 設定されているカウントダウン時間を返します。
 		/// @return 設定されているカウントダウン時間

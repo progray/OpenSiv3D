@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -258,7 +258,7 @@ namespace s3d
 			{
 				const auto& state = m_states[i];
 
-				if (state.pressed || state.up)
+				if (state.pressed() || state.up())
 				{
 					m_allInputs.emplace_back(InputDeviceType::Keyboard, static_cast<uint8>(i));
 				}
@@ -266,7 +266,7 @@ namespace s3d
 		}
 		
 		{
-			if (m_states[0x1B].down)
+			if (m_states[0x1B].down())
 			{
 				SIV3D_ENGINE(UserAction)->reportUserActions(UserAction::AnyKeyDown | UserAction::EscapeKeyDown);
 			}
@@ -287,19 +287,31 @@ namespace s3d
 	bool CKeyboard::down(const uint32 index) const
 	{
 		assert(index < InputState::KeyCount);
-		return m_states[index].down;
+		return m_states[index].down();
 	}
 
 	bool CKeyboard::pressed(const uint32 index) const
 	{
 		assert(index < InputState::KeyCount);
-		return m_states[index].pressed;
+		return m_states[index].pressed();
 	}
 
 	bool CKeyboard::up(const uint32 index) const
 	{
 		assert(index < InputState::KeyCount);
-		return m_states[index].up;
+		return m_states[index].up();
+	}
+
+	void CKeyboard::clearInput(const uint32 index)
+	{
+		assert(index < InputState::KeyCount);
+		m_states[index].clearInput();
+	}
+
+	bool CKeyboard::cleared(const uint32 index) const
+	{
+		assert(index < InputState::KeyCount);
+		return m_states[index].cleared();
 	}
 
 	Duration CKeyboard::pressedDuration(const uint32 index) const

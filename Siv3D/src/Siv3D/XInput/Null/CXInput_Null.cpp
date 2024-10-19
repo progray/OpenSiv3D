@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -32,7 +32,13 @@ namespace s3d
 
 	void CXInput_Null::update(bool)
 	{
-
+		for (auto& state : m_states)
+		{
+			for (auto& button : state.buttons)
+			{
+				button.update(false);
+			}
+		}
 	}
 
 	bool CXInput_Null::isConnected([[maybe_unused]] const uint32 playerIndex) const
@@ -88,6 +94,20 @@ namespace s3d
 		assert(playerIndex < XInput.MaxPlayerCount);
 
 		return false;
+	}
+
+	void CXInput_Null::clearInput(const uint32 playerIndex, const uint32 index)
+	{
+		assert(playerIndex < XInput.MaxPlayerCount);
+
+		return m_states[playerIndex].buttons[index].clearInput();
+	}
+
+	bool CXInput_Null::cleared(const uint32 playerIndex, const uint32 index) const
+	{
+		assert(playerIndex < XInput.MaxPlayerCount);
+
+		return m_states[playerIndex].buttons[index].cleared();
 	}
 
 	Duration CXInput_Null::pressedDuration([[maybe_unused]] const uint32 playerIndex, uint32) const

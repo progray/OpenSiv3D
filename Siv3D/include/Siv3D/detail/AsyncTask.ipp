@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -22,9 +22,13 @@ namespace s3d
 		: m_data{ std::move(other.m_data) } {}
 
 	template <class Type>
-	template <class Fty, class... Args, std::enable_if_t<std::is_invocable_v<Fty, Args...>>*>
+	template <class Fty, class... Args, std::enable_if_t<std::is_invocable_v<std::decay_t<Fty>, std::decay_t<Args>...>>*>
 	inline AsyncTask<Type>::AsyncTask(Fty&& f, Args&&... args)
+	# if !SIV3D_PLATFORM(WEB) || defined(__EMSCRIPTEN_PTHREADS__)
 		: m_data{ std::async(std::launch::async, std::forward<Fty>(f), std::forward<Args>(args)...) } {}
+	# else
+		: m_data{} {}
+	# endif
 
 	template <class Type>
 	inline AsyncTask<Type>& AsyncTask<Type>::operator =(base_type&& other) noexcept
@@ -78,7 +82,7 @@ namespace s3d
 	template <class Clock, class Duration>
 	inline std::future_status AsyncTask<Type>::wait_until(const std::chrono::time_point<Clock, Duration>& absTime) const
 	{
-		return m_data.wait_for(absTime);
+		return m_data.wait_until(absTime);
 	}
 
 	template <class Type>
@@ -87,7 +91,7 @@ namespace s3d
 		return m_data.share();
 	}
 
-	template <class Fty, class... Args, std::enable_if_t<std::is_invocable_v<Fty, Args...>>*>
+	template <class Fty, class... Args, std::enable_if_t<std::is_invocable_v<std::decay_t<Fty>, std::decay_t<Args>...>>*>
 	inline auto Async(Fty&& f, Args&&... args)
 	{
 		return AsyncTask<std::invoke_result_t<std::decay_t<Fty>, std::decay_t<Args>...>>{ std::forward<Fty>(f), std::forward<Args>(args)... };

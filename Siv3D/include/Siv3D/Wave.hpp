@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -46,7 +46,7 @@ namespace s3d
 
 		static constexpr uint32 DefaultSampleRate	= 44'100;
 
-		static constexpr uint32 MaxSamlpeRate		= 192'000;
+		static constexpr uint32 MaxSampleRate		= 192'000;
 
 		SIV3D_NODISCARD_CXX20
 		Wave() = default;
@@ -357,7 +357,10 @@ namespace s3d
 		Wave& reverse();
 
 		[[nodiscard]]
-		Wave reversed() const;
+		Wave reversed() const&;
+
+		[[nodiscard]]
+		Wave reversed() &&;
 
 		[[nodiscard]]
 		Wave slice(size_t index) const;

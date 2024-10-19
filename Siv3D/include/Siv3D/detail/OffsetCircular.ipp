@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -60,6 +60,30 @@ namespace s3d
 	inline constexpr OffsetCircularBase<Float, Oclock>& OffsetCircularBase<Float, Oclock>::operator -=(const position_type v) noexcept
 	{
 		return moveBy(-v);
+	}
+
+	template <class Float, int32 Oclock>
+	inline constexpr OffsetCircularBase<Float, Oclock> OffsetCircularBase<Float, Oclock>::withCenter(const value_type x, const value_type y) const noexcept
+	{
+		return{ Vec2{ x, y }, r, theta };
+	}
+
+	template <class Float, int32 Oclock>
+	inline constexpr OffsetCircularBase<Float, Oclock> OffsetCircularBase<Float, Oclock>::withCenter(const position_type _center) const noexcept
+	{
+		return{ _center, r, theta };
+	}
+
+	template <class Float, int32 Oclock>
+	inline constexpr OffsetCircularBase<Float, Oclock> OffsetCircularBase<Float, Oclock>::withR(const value_type _r) const noexcept
+	{
+		return{ center, _r, theta };
+	}
+
+	template <class Float, int32 Oclock>
+	inline constexpr OffsetCircularBase<Float, Oclock> OffsetCircularBase<Float, Oclock>::withTheta(const value_type _theta) const noexcept
+	{
+		return{ center, r, _theta };
 	}
 
 	template <class Float, int32 Oclock>

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -236,55 +236,55 @@ namespace s3d
 
 	inline constexpr Rect& Rect::setPos(const Arg::topCenter_<position_type> topCenter) noexcept
 	{
-		pos.set((topCenter->x - w / 2), topCenter->y);
+		pos.set((topCenter->x - size.x / 2), topCenter->y);
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setPos(const Arg::topRight_<position_type> topRight) noexcept
 	{
-		pos.set(topRight->x - w, topRight->y);
+		pos.set(topRight->x - size.x, topRight->y);
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setPos(const Arg::rightCenter_<position_type> rightCenter) noexcept
 	{
-		pos.set((rightCenter->x - w), (rightCenter->y - h / 2));
+		pos.set((rightCenter->x - size.x), (rightCenter->y - size.y / 2));
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setPos(const Arg::bottomRight_<position_type> bottomRight) noexcept
 	{
-		pos.set((bottomRight->x - w), (bottomRight->y - h));
+		pos.set((bottomRight->x - size.x), (bottomRight->y - size.y));
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setPos(const Arg::bottomCenter_<position_type> bottomCenter) noexcept
 	{
-		pos.set((bottomCenter->x - w / 2), (bottomCenter->y - h));
+		pos.set((bottomCenter->x - size.x / 2), (bottomCenter->y - size.y));
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setPos(const Arg::bottomLeft_<position_type> bottomLeft) noexcept
 	{
-		pos.set(bottomLeft->x, bottomLeft->y - h);
+		pos.set(bottomLeft->x, bottomLeft->y - size.y);
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setPos(const Arg::leftCenter_<position_type> leftCenter) noexcept
 	{
-		pos.set(leftCenter->x, (leftCenter->y - h / 2));
+		pos.set(leftCenter->x, (leftCenter->y - size.y / 2));
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setCenter(const value_type _x, const value_type _y) noexcept
 	{
-		pos.set((_x - w / 2), (_y - h / 2));
+		pos.set((_x - size.x / 2), (_y - size.y / 2));
 		return *this;
 	}
 
 	inline constexpr Rect& Rect::setCenter(const position_type _pos) noexcept
 	{
-		pos.set((_pos.x - w / 2), (_pos.y - h / 2));
+		pos.set((_pos.x - size.x / 2), (_pos.y - size.y / 2));
 		return *this;
 	}
 
@@ -633,32 +633,32 @@ namespace s3d
 
 	inline constexpr Rect::value_type Rect::leftX() const noexcept
 	{
-		return x;
+		return pos.x;
 	}
 
 	inline constexpr Rect::value_type Rect::rightX() const noexcept
 	{
-		return (x + w);
+		return (pos.x + size.x);
 	}
 
 	inline constexpr Rect::value_type Rect::topY() const noexcept
 	{
-		return y;
+		return pos.y;
 	}
 
 	inline constexpr Rect::value_type Rect::bottomY() const noexcept
 	{
-		return (y + h);
+		return (pos.y + size.y);
 	}
 
 	inline constexpr double Rect::centerX() const noexcept
 	{
-		return (x + w * 0.5);
+		return (pos.x + size.x * 0.5);
 	}
 
 	inline constexpr double Rect::centerY() const noexcept
 	{
-		return (y + h * 0.5);
+		return (pos.y + size.y * 0.5);
 	}
 
 	inline constexpr Rect::size_type Rect::tl() const noexcept
@@ -708,7 +708,7 @@ namespace s3d
 
 	inline constexpr Vec2 Rect::getRelativePoint(const double relativeX, const double relativeY) const noexcept
 	{
-		return{ (x + w * relativeX), (y + h * relativeY) };
+		return{ (pos.x + size.x * relativeX), (pos.y + size.y * relativeY) };
 	}
 
 	inline constexpr Line Rect::top() const noexcept
@@ -816,6 +816,29 @@ namespace s3d
 		return (static_cast<Type>(size.x) / size.y);
 	}
 
+	inline constexpr Rect Rect::rotated90At(const position_type& _pos, const int32 n) const noexcept
+	{
+		switch (n % 4) // 時計回りに何回 90° 回転するか
+		{
+		case 1:
+		case -3:
+			return { bl().rotate90At(_pos, 1),size.yx() }; // 1 回または -3 回
+		case 2:
+		case -2:
+			return { br().rotate90At(_pos, 2),size }; // 2 回または -2 回
+		case 3:
+		case -1:
+			return { tr().rotate90At(_pos, 3),size.yx() }; // 3 回または -1 回
+		default:
+			return *this; // 0 回
+		}
+	}
+
+	inline constexpr Rect& Rect::rotate90At(const position_type& _pos, const int32 n) noexcept
+	{
+		return (*this = rotated90At(_pos, n));
+	}
+
 	inline constexpr Quad Rect::shearedX(const double vx) const noexcept
 	{
 		return{ {(pos.x + vx), pos.y}, {(pos.x + size.x + vx), pos.y}, {(pos.x + size.x - vx), (pos.y + size.y)}, {(pos.x - vx), (pos.y + size.y)} };
@@ -824,6 +847,16 @@ namespace s3d
 	inline constexpr Quad Rect::shearedY(const double vy) const noexcept
 	{
 		return{ {pos.x, (pos.y - vy)}, {(pos.x + size.x), (pos.y + vy)}, {(pos.x + size.x), (pos.y + size.y + vy)}, {pos.x, (pos.y + size.y - vy)} };
+	}
+
+	inline Quad Rect::skewedX(const double angle) const noexcept
+	{
+		return shearedX(std::tan(angle) * size.y / 2);
+	}
+
+	inline Quad Rect::skewedY(const double angle) const noexcept
+	{
+		return shearedY(std::tan(angle) * size.x / 2);
 	}
 
 	inline constexpr RoundRect Rect::rounded(const double r) const noexcept
@@ -850,11 +883,11 @@ namespace s3d
 	{
 		const auto ox = std::max(pos.x, other.pos.x);
 		const auto oy = std::max(pos.y, other.pos.y);
-		const auto ow = (std::min((pos.x + w), (other.pos.x + other.w)) - ox);
+		const auto ow = (std::min((pos.x + size.x), (other.pos.x + other.size.x)) - ox);
 
 		if (0 <= ow)
 		{
-			const auto oh = (std::min((pos.y + h), (other.pos.y + other.h)) - oy);
+			const auto oh = (std::min((pos.y + size.y), (other.pos.y + other.size.y)) - oy);
 
 			if (0 <= oh)
 			{

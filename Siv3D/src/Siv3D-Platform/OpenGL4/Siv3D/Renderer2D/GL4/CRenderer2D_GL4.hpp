@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -105,7 +105,6 @@ namespace s3d
 		//
 		//////////////////////////////////////////////////
 		GLuint m_vertexArray		= 0;
-		GLuint m_sampler			= 0;
 
 		// VertexBuilder でのメモリアロケーションを避けるためのバッファ
 		Array<Float2> m_buffer;
@@ -137,6 +136,8 @@ namespace s3d
 
 		void addRectFrame(const FloatRect& rect, float thickness, const Float4& innerColor, const Float4& outerColor) override;
 
+		void addRectFrameTB(const FloatRect& rect, float thickness, const Float4& topColor, const Float4& bottomColor) override;
+
 		void addCircle(const Float2& center, float r, const Float4& innerColor, const Float4& outerColor) override;
 
 		void addCircleFrame(const Float2& center, float rInner, float thickness, const Float4& innerColor, const Float4& outerColor) override;
@@ -144,6 +145,8 @@ namespace s3d
 		void addCirclePie(const Float2& center, float r, float startAngle, float angle, const Float4& innerColor, const Float4& outerColor) override;
 
 		void addCircleArc(const LineStyle& style, const Float2& center, float rInner, float startAngle, float angle, float thickness, const Float4& innerColor, const Float4& outerColor) override;
+
+		void addCircleSegment(const Float2& center, float r, float startAngle, float angle, const Float4& color) override;
 
 		void addEllipse(const Float2& center, float a, float b, const Float4& innerColor, const Float4& outerColor) override;
 
@@ -155,7 +158,11 @@ namespace s3d
 
 		void addRoundRect(const FloatRect& rect, float w, float h, float r, const Float4& color) override;
 
+		void addRoundRect(const FloatRect& rect, float w, float h, float r, const Float4& topColor, const Float4& bottomColor) override;
+
 		void addRoundRectFrame(const RoundRect& outer, const RoundRect& inner, const Float4& color) override;
+
+		void addRoundRectFrame(const RoundRect& outer, const RoundRect& inner, const Float4& topColor, const Float4& bottomColor) override;
 
 		void addLineString(const LineStyle& style, const Vec2* points, size_t size, const Optional<Float2>& offset, float thickness, bool inner, const Float4& color, CloseRing closeRing) override;
 
@@ -182,6 +189,12 @@ namespace s3d
 		void addTexturedRoundRect(const Texture& texture, const FloatRect& rect, float w, float h, float r, const FloatRect& uvRect, const Float4& color) override;
 
 		void addTexturedVertices(const Texture& texture, const Vertex2D* vertices, size_t vertexCount, const TriangleIndex* indices, size_t num_triangles) override;
+
+		void addRectShadow(const FloatRect& rect, float blur, const Float4& color, bool fill) override;
+
+		void addCircleShadow(const Circle& circle, float blur, const Float4& color) override;
+
+		void addRoundRectShadow(const RoundRect& roundRect, float blur, const Float4& color, bool fill) override;
 		
 		void addTexturedParticles(const Texture& texture, const Array<Particle2D>& particles,
 			ParticleSystem2DParameters::SizeOverLifeTimeFunc sizeOverLifeTimeFunc,

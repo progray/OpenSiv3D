@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -60,9 +60,14 @@ namespace s3d
 		return *this;
 	}
 
-	MultiPolygon MultiPolygon::reversed() const
+	MultiPolygon MultiPolygon::reversed() const&
 	{
 		return MultiPolygon(rbegin(), rend());
+	}
+
+	MultiPolygon MultiPolygon::reversed() &&
+	{
+		return std::move(reverse());
 	}
 
 	MultiPolygon& MultiPolygon::shuffle()
@@ -92,7 +97,7 @@ namespace s3d
 		return MultiPolygon(begin() + index, begin() + Min(index + length, size()));
 	}
 
-	MultiPolygon MultiPolygon::movedBy(const double x, const double y) const
+	MultiPolygon MultiPolygon::movedBy(const double x, const double y) const&
 	{
 		MultiPolygon polygons{ *this };
 
@@ -101,14 +106,24 @@ namespace s3d
 		return polygons;
 	}
 
-	MultiPolygon MultiPolygon::movedBy(const Vec2 v) const
+	MultiPolygon MultiPolygon::movedBy(const double x, const double y) && noexcept
+	{
+		return std::move(moveBy(x, y));
+	}
+
+	MultiPolygon MultiPolygon::movedBy(const Vec2 v) const&
 	{
 		return movedBy(v.x, v.y);
 	}
 
+	MultiPolygon MultiPolygon::movedBy(const Vec2 v) && noexcept
+	{
+		return std::move(moveBy(v));
+	}
+
 	MultiPolygon& MultiPolygon::moveBy(const double x, const double y) noexcept
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.moveBy(x, y);
 		}
@@ -121,19 +136,29 @@ namespace s3d
 		return moveBy(v.x, v.y);
 	}
 
-	MultiPolygon MultiPolygon::rotated(const double angle) const
+	MultiPolygon MultiPolygon::rotated(const double angle) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.rotated(angle); }) };
 	}
 
-	MultiPolygon MultiPolygon::rotatedAt(const Vec2& pos, const double angle) const
+	MultiPolygon MultiPolygon::rotated(const double angle) &&
+	{
+		return std::move(rotate(angle));
+	}
+
+	MultiPolygon MultiPolygon::rotatedAt(const Vec2& pos, const double angle) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.rotatedAt(pos, angle); }) };
 	}
 
+	MultiPolygon MultiPolygon::rotatedAt(const Vec2& pos, const double angle) &&
+	{
+		return std::move(rotateAt(pos, angle));
+	}
+
 	MultiPolygon& MultiPolygon::rotate(const double angle)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.rotate(angle);
 		}
@@ -143,7 +168,7 @@ namespace s3d
 
 	MultiPolygon& MultiPolygon::rotateAt(const Vec2& pos, const double angle)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.rotateAt(pos, angle);
 		}
@@ -151,14 +176,19 @@ namespace s3d
 		return *this;
 	}
 
-	MultiPolygon MultiPolygon::transformed(const double s, double c, const Vec2& pos) const
+	MultiPolygon MultiPolygon::transformed(const double s, double c, const Vec2& pos) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.transformed(s, c, pos); }) };
 	}
 
+	MultiPolygon MultiPolygon::transformed(const double s, double c, const Vec2& pos) &&
+	{
+		return std::move(transform(s, c, pos));
+	}
+
 	MultiPolygon& MultiPolygon::transform(const double s, const double c, const Vec2& pos)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.transform(s, c, pos);
 		}
@@ -166,24 +196,39 @@ namespace s3d
 		return *this;
 	}
 
-	MultiPolygon MultiPolygon::scaled(const double s) const
+	MultiPolygon MultiPolygon::scaled(const double s) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.scaled(s); }) };
 	}
 
-	MultiPolygon MultiPolygon::scaled(const double sx, const double sy) const
+	MultiPolygon MultiPolygon::scaled(const double s) &&
+	{
+		return std::move(scale(s));
+	}
+
+	MultiPolygon MultiPolygon::scaled(const double sx, const double sy) const&
 	{
 		return scaled(Vec2{ sx, sy });
 	}
 
-	MultiPolygon MultiPolygon::scaled(const Vec2 s) const
+	MultiPolygon MultiPolygon::scaled(const double sx, const double sy) &&
+	{
+		return std::move(scale(sx, sy));
+	}
+
+	MultiPolygon MultiPolygon::scaled(const Vec2 s) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.scaled(s); }) };
 	}
 
+	MultiPolygon MultiPolygon::scaled(const Vec2 s) &&
+	{
+		return std::move(scale(s));
+	}
+
 	MultiPolygon& MultiPolygon::scale(const double s)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.scale(s);
 		}
@@ -198,7 +243,7 @@ namespace s3d
 
 	MultiPolygon& MultiPolygon::scale(const Vec2 s)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.scale(s);
 		}
@@ -206,14 +251,19 @@ namespace s3d
 		return *this;
 	}
 
-	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const double s) const
+	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const double s) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.scaledAt(pos, s); }) };
 	}
 
+	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const double s) &&
+	{
+		return std::move(scaleAt(pos, s));
+	}
+
 	MultiPolygon& MultiPolygon::scaleAt(const Vec2 pos, const double s)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.scaleAt(pos, s);
 		}
@@ -221,14 +271,24 @@ namespace s3d
 		return *this;
 	}
 
-	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const double sx, const double sy) const
+	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const double sx, const double sy) const&
 	{
 		return scaledAt(pos, Vec2{ sx, sy });
 	}
 
-	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const Vec2 s) const
+	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const double sx, const double sy) &&
+	{
+		return std::move(scaleAt(pos, sx, sy));
+	}
+
+	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const Vec2 s) const&
 	{
 		return MultiPolygon{ m_data.map([=](const Polygon& p) { return p.scaledAt(pos, s); }) };
+	}
+
+	MultiPolygon MultiPolygon::scaledAt(const Vec2 pos, const Vec2 s) &&
+	{
+		return std::move(scaleAt(pos, s));
 	}
 
 	MultiPolygon& MultiPolygon::scaleAt(const Vec2 pos, const double sx, const double sy)
@@ -238,12 +298,68 @@ namespace s3d
 
 	MultiPolygon& MultiPolygon::scaleAt(const Vec2 pos, const Vec2 s)
 	{
-		for (auto& polygon : *this)
+		for (auto& polygon : m_data)
 		{
 			polygon.scaleAt(pos, s);
 		}
 
 		return *this;
+	}
+
+	double MultiPolygon::area() const noexcept
+	{
+		double total = 0.0;
+		
+		for (const auto& polygon : m_data)
+		{
+			total += polygon.area();
+		}
+		
+		return total;
+	}
+
+	double MultiPolygon::perimeter() const noexcept
+	{
+		double total = 0.0;
+		
+		for (const auto& polygon : m_data)
+		{
+			total += polygon.perimeter();
+		}
+		
+		return total;
+	}
+
+	Vec2 MultiPolygon::centroid() const
+	{
+		if (m_data.empty())
+		{
+			return Vec2{ 0, 0 };
+		}
+		
+		Vec2 weightedCoordsTotal{ 0, 0 };
+		double areaTotal = 0.0;
+		
+		for (const auto& polygon : m_data)
+		{
+			const double polygonArea = polygon.area();
+			weightedCoordsTotal += polygonArea * polygon.centroid();
+			areaTotal += polygonArea;
+		}
+		
+		return weightedCoordsTotal / areaTotal;
+	}
+
+	Polygon MultiPolygon::computeConvexHull() const
+	{
+		Array<Vec2> points;
+
+		for (const auto& polygon : m_data)
+		{
+			points.append(polygon.outer());
+		}
+
+		return Geometry2D::ConvexHull(points);
 	}
 
 	RectF MultiPolygon::computeBoundingRect() const noexcept
@@ -336,7 +452,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::paint(Image& dst, const Color& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.paint(dst, color);
 		}
@@ -348,7 +464,7 @@ namespace s3d
 	{
 		const Vec2 pos{ x, y };
 
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.paint(dst, pos, color);
 		}
@@ -358,7 +474,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::paint(Image& dst, const Vec2& pos, const Color& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.paint(dst, pos, color);
 		}
@@ -368,7 +484,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::overwrite(Image& dst, const Color& color, const Antialiased antialiased) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.overwrite(dst, color, antialiased);
 		}
@@ -380,7 +496,7 @@ namespace s3d
 	{
 		const Vec2 pos{ x, y };
 
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.overwrite(dst, pos, color, antialiased);
 		}
@@ -390,7 +506,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::overwrite(Image& dst, const Vec2& pos, const Color& color, const Antialiased antialiased) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.overwrite(dst, pos, color, antialiased);
 		}
@@ -400,7 +516,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::draw(const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.draw(color);
 		}
@@ -410,7 +526,7 @@ namespace s3d
 
 	void MultiPolygon::draw(const double x, const double y, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.draw(x, y, color);
 		}
@@ -418,7 +534,7 @@ namespace s3d
 
 	void MultiPolygon::draw(const Vec2& pos, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.draw(pos, color);
 		}
@@ -426,7 +542,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::drawFrame(const double thickness, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawFrame(thickness, color);
 		}
@@ -436,7 +552,7 @@ namespace s3d
 
 	void MultiPolygon::drawFrame(const double x, const double y, const double thickness, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawFrame(x, y, thickness, color);
 		}
@@ -444,7 +560,7 @@ namespace s3d
 
 	void MultiPolygon::drawFrame(const Vec2& pos, const double thickness, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawFrame(pos, thickness, color);
 		}
@@ -452,7 +568,7 @@ namespace s3d
 
 	const MultiPolygon& MultiPolygon::drawWireframe(const double thickness, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawWireframe(thickness, color);
 		}
@@ -462,7 +578,7 @@ namespace s3d
 
 	void MultiPolygon::drawWireframe(const double x, const double y, const double thickness, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawWireframe(x, y, thickness, color);
 		}
@@ -470,7 +586,7 @@ namespace s3d
 
 	void MultiPolygon::drawWireframe(const Vec2& pos, const double thickness, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawWireframe(pos, thickness, color);
 		}
@@ -480,7 +596,7 @@ namespace s3d
 	{
 		const auto [s, c] = FastMath::SinCos(angle);
 
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawTransformed(s, c, pos, color);
 		}
@@ -488,7 +604,7 @@ namespace s3d
 
 	void MultiPolygon::drawTransformed(const double s, const double c, const Vec2& pos, const ColorF& color) const
 	{
-		for (const auto& polygon : *this)
+		for (const auto& polygon : m_data)
 		{
 			polygon.drawTransformed(s, c, pos, color);
 		}

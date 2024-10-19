@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -87,7 +87,13 @@ namespace s3d
 		XMLReader() = default;
 
 		SIV3D_NODISCARD_CXX20
+		explicit XMLReader(const char32* path, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
+
+		SIV3D_NODISCARD_CXX20
 		explicit XMLReader(FilePathView path, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
+
+		SIV3D_NODISCARD_CXX20
+		explicit XMLReader(const FilePath& path, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
 
 		SIV3D_NODISCARD_CXX20
 		explicit XMLReader(Arg::code_<String> code, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
@@ -99,7 +105,11 @@ namespace s3d
 		SIV3D_NODISCARD_CXX20
 		explicit XMLReader(std::unique_ptr<IReader>&& reader, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
 
+		bool open(const char32* path, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
+
 		bool open(FilePathView path, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
+
+		bool open(const FilePath& path, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
 
 		bool open(Arg::code_<String> code, PreserveWhitespace preserveWhitespace = PreserveWhitespace::No);
 

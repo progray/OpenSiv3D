@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -16,65 +16,49 @@ namespace s3d
 {
 	namespace FileSystem
 	{
-		String Extension(const FilePathView path)
+		String Extension(FilePathView path)
 		{
-			if (not path)
+			if (path.isEmpty())
 			{
 				return{};
 			}
 
-			if constexpr (Platform::HasEmbeddedResource)
+			while (path.starts_with(U'.'))
 			{
-				if (IsResourcePath(path))
-				{
-					return{};
-				}
+				path.remove_prefix(1);
 			}
 
-			const size_t dotPos = path.lastIndexOf(U'.');
+			const size_t lastDotPos = path.lastIndexOf(U'.');
 
-			if (dotPos == String::npos)
+			if (lastDotPos == String::npos)
 			{
 				return{};
 			}
 
-			const size_t sepPos = path.lastIndexOfAny(U"/\\");
+			const size_t lastSeparatorPos = path.lastIndexOfAny(U"/\\");
 
-			if ((sepPos != String::npos) && (dotPos < sepPos))
+			// aaa.bbb/ccc のようなケースを弾く
+			if ((lastSeparatorPos != String::npos)
+				&& (lastDotPos < lastSeparatorPos))
 			{
 				return{};
 			}
 
-			return String{ path.substr(dotPos + 1) }.lowercase();
+			return String{ path.substr(lastDotPos + 1) }.lowercase();
 		}
 
-		String FileName(const FilePathView path)
+		String FileName(const FilePathView path_)
 		{
-			if (not path)
+			if (path_.isEmpty())
 			{
 				return{};
 			}
 
-			if constexpr (Platform::HasEmbeddedResource)
-			{
-				if (IsResourcePath(path))
-				{
-					return{};
-				}
-			}
+			FilePath path = FilePath{ path_ }.replace(U'\\', U'/');
 
 			if (path.ends_with(U'/'))
 			{
-				const size_t sepPos = path.lastIndexOf(U'/', path.length() - 2);
-
-				if (sepPos == String::npos)
-				{
-					return String(path.begin(), path.end() - 1);
-				}
-				else
-				{
-					return String(path.begin() + sepPos + 1, path.end() - 1);
-				}
+				return{};
 			}
 			else
 			{
@@ -103,6 +87,11 @@ namespace s3d
 			const size_t dotPos = fileName.lastIndexOf(U'.');
 
 			if (dotPos == String::npos)
+			{
+				return fileName;
+			}
+
+			if ((dotPos == 0) || (dotPos == (fileName.size() - 1)))
 			{
 				return fileName;
 			}

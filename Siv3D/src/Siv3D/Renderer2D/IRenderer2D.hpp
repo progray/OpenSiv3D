@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -69,6 +69,8 @@ namespace s3d
 
 		virtual void addRectFrame(const FloatRect& rect, float thickness, const Float4& innerColor, const Float4& outerColor) = 0;
 
+		virtual void addRectFrameTB(const FloatRect& rect, float thickness, const Float4& topColor, const Float4& bottomColor) = 0;
+
 		virtual void addCircle(const Float2& center, float r, const Float4& innerColor, const Float4& outerColor) = 0;
 
 		virtual void addCircleFrame(const Float2& center, float rInner, float thickness, const Float4& innerColor, const Float4& outerColor) = 0;
@@ -76,6 +78,8 @@ namespace s3d
 		virtual void addCirclePie(const Float2& center, float r, float startAngle, float angle, const Float4& innerColor, const Float4& outerColor) = 0;
 
 		virtual void addCircleArc(const LineStyle& style, const Float2& center, float rInner, float startAngle, float angle, float thickness, const Float4& innerColor, const Float4& outerColor) = 0;
+
+		virtual void addCircleSegment(const Float2& center, float r, float startAngle, float angle, const Float4& color) = 0;
 
 		virtual void addEllipse(const Float2& center, float a, float b, const Float4& innerColor, const Float4& outerColor) = 0;
 
@@ -87,7 +91,11 @@ namespace s3d
 
 		virtual void addRoundRect(const FloatRect& rect, float w, float h, float r, const Float4& color) = 0;
 
+		virtual void addRoundRect(const FloatRect& rect, float w, float h, float r, const Float4& topColor, const Float4& bottomColor) = 0;
+
 		virtual void addRoundRectFrame(const RoundRect& outer, const RoundRect& inner, const Float4& color) = 0;
+
+		virtual void addRoundRectFrame(const RoundRect& outer, const RoundRect& inner, const Float4& topColor, const Float4& bottomColor) = 0;
 
 		virtual void addLineString(const LineStyle& style, const Vec2* points, size_t size, const Optional<Float2>& offset, float thickness, bool inner, const Float4& color, CloseRing closeRing) = 0;
 
@@ -114,6 +122,12 @@ namespace s3d
 		virtual void addTexturedRoundRect(const Texture& texture, const FloatRect& rect, float w, float h, float r, const FloatRect& uvRect, const Float4& color) = 0;
 
 		virtual void addTexturedVertices(const Texture& texture, const Vertex2D* vertices, size_t vertexCount, const TriangleIndex* indices, size_t num_triangles) = 0;
+
+		virtual void addRectShadow(const FloatRect& rect, float blur, const Float4& color, bool fill) = 0;
+
+		virtual void addCircleShadow(const Circle& circle, float blur, const Float4& color) = 0;
+
+		virtual void addRoundRectShadow(const RoundRect& roundRect, float blur, const Float4& color, bool fill) = 0;
 
 		virtual void addTexturedParticles(const Texture& texture, const Array<Particle2D>& particles,
 			ParticleSystem2DParameters::SizeOverLifeTimeFunc sizeOverLifeTimeFunc,

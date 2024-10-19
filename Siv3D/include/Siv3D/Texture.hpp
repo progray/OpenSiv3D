@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -18,6 +18,12 @@
 # include "2DShapesFwd.hpp"
 # include "PredefinedNamedParameter.hpp"
 # include "PredefinedYesNo.hpp"
+
+# if SIV3D_PLATFORM(WINDOWS)
+
+	struct ID3D11Texture2D;
+
+# endif
 
 namespace s3d
 {
@@ -100,10 +106,10 @@ namespace s3d
 		[[nodiscard]]
 		TextureFormat getFormat() const;
 
-		/// @brief ミップマッピングが有効化されているかを返します。
-		/// @return ミップマッピングが有効化されている場合 true, それ以外の場合は false
+		/// @brief ミップマップを持つかを返します。
+		/// @return ミップマップを持つ場合 true, それ以外の場合は false
 		[[nodiscard]]
-		bool isMipped() const;
+		bool hasMipMap() const;
 
 		[[nodiscard]]
 		bool srgbSampling() const;
@@ -289,6 +295,13 @@ namespace s3d
 
 		void swap(Texture& other) noexcept;
 
+	# if SIV3D_PLATFORM(WINDOWS)
+
+		[[nodiscard]]
+		ID3D11Texture2D* getD3D11Texture2D();
+
+	# endif
+
 	protected:
 
 		struct Dynamic {};
@@ -304,22 +317,22 @@ namespace s3d
 		Texture(Dynamic, const Size& size, const ColorF& color, const TextureFormat& format, TextureDesc desc);
 	
 		SIV3D_NODISCARD_CXX20
-		Texture(Render, const Size& size, const TextureFormat& format, HasDepth hasDepth);
+		Texture(Render, const Size& size, const TextureFormat& format, HasDepth hasDepth, HasMipMap hasMipMap);
 
 		SIV3D_NODISCARD_CXX20
-		Texture(Render, const Image& image, HasDepth hasDepth);
+		Texture(Render, const Image& image, HasDepth hasDepth, HasMipMap hasMipMap);
 
 		SIV3D_NODISCARD_CXX20
-		Texture(Render, const Grid<float>& image, HasDepth hasDepth);
+		Texture(Render, const Grid<float>& image, HasDepth hasDepth, HasMipMap hasMipMap);
 
 		SIV3D_NODISCARD_CXX20
-		Texture(Render, const Grid<Float2>& image, HasDepth hasDepth);
+		Texture(Render, const Grid<Float2>& image, HasDepth hasDepth, HasMipMap hasMipMap);
 
 		SIV3D_NODISCARD_CXX20
-		Texture(Render, const Grid<Float4>& image, HasDepth hasDepth);
+		Texture(Render, const Grid<Float4>& image, HasDepth hasDepth, HasMipMap hasMipMap);
 
 		SIV3D_NODISCARD_CXX20
-		Texture(MSRender, const Size& size, const TextureFormat& format, HasDepth hasDepth);
+		Texture(MSRender, const Size& size, const TextureFormat& format, HasDepth hasDepth, HasMipMap hasMipMap);
 	};
 }
 

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -19,6 +19,7 @@
 # include <cassert>
 # include <stdexcept>
 # include <algorithm>
+# include <limits>
 # include "Common.hpp"
 # include "Utility.hpp"
 # include "Hash.hpp"
@@ -107,24 +108,36 @@ namespace s3d
 		[[nodiscard]]
 		constexpr const_pointer data() const noexcept;
 
+		/// @brief 文字列の長さ（要素数）を返します。
+		/// @return 文字列の長さ（要素数）
 		[[nodiscard]]
 		constexpr size_type size() const noexcept;
 
 		[[nodiscard]]
 		constexpr size_type size_bytes() const noexcept;
 
+		/// @brief 文字列の長さ（要素数）を返します。
+		/// @remark `.length()` と同じです。
+		/// @return 文字列の長さ（要素数）
 		[[nodiscard]]
 		constexpr size_type length() const noexcept;
 
 		[[nodiscard]]
 		constexpr size_type max_size() const noexcept;
 
+		/// @brief 文字列が空であるかを返します。
+		/// @return 文字列が空である場合 true, それ以外の場合は false
 		[[nodiscard]]
 		constexpr bool empty() const noexcept;
 
+		/// @brief 文字列が空であるかを返します。
+		/// @remark `empty()` と同じです。
+		/// @return 文字列が空である場合 true, それ以外の場合は false
 		[[nodiscard]]
 		constexpr bool isEmpty() const noexcept;
 
+		/// @brief 文字列が空でないかを返します。
+		/// @return 文字列が空でない場合 true, それ以外の場合は false
 		[[nodiscard]]
 		explicit constexpr operator bool() const noexcept;
 
@@ -159,6 +172,18 @@ namespace s3d
 		[[nodiscard]]
 		constexpr int32 compare(size_type pos1, size_type n1, const value_type* s, size_type n2) const noexcept;
 
+		/// @brief 文字列が指定した文字を含むかを返します。
+		/// @param ch 検索する文字
+		/// @return 指定した文字を含む場合 true, それ以外の場合は false
+		[[nodiscard]]
+		constexpr bool contains(value_type ch) const noexcept;
+
+		/// @brief 文字列が指定した文字列を含むかを返します。
+		/// @param ch 検索する文字列
+		/// @return 指定した文字列を含む場合 true, それ以外の場合は false
+		[[nodiscard]]
+		constexpr bool contains(StringView s) const noexcept;
+
 		/// @brief 文字列が指定した文字から始まるかを返します。
 		/// @param ch 検索する文字
 		/// @return 指定した文字から始まる場合 true, それ以外の場合は false	
@@ -175,7 +200,7 @@ namespace s3d
 		/// @param ch 検索する文字
 		/// @return 指定した文字で終わる場合 true, それ以外の場合は false
 		[[nodiscard]]
-		bool ends_with(value_type ch) const noexcept;
+		constexpr bool ends_with(value_type ch) const noexcept;
 
 		/// @brief 文字列が指定した文字列で終わるかを返します。
 		/// @param s 検索する文字列
@@ -220,10 +245,10 @@ namespace s3d
 		constexpr size_t indexOfAny(const value_type* anyof, size_t pos = 0) const noexcept;
 
 		[[nodiscard]]
-		constexpr size_t lastIndexOfAny(StringView anyof, size_t pos = 0) const noexcept;
+		constexpr size_t lastIndexOfAny(StringView anyof, size_t pos = npos) const noexcept;
 
 		[[nodiscard]]
-		constexpr size_t lastIndexOfAny(const value_type* anyof, size_t pos = 0) const noexcept;
+		constexpr size_t lastIndexOfAny(const value_type* anyof, size_t pos = npos) const noexcept;
 
 		[[nodiscard]]
 		constexpr size_t indexNotOfAny(StringView anyof, size_t pos = 0) const noexcept;
@@ -232,20 +257,22 @@ namespace s3d
 		constexpr size_t indexNotOfAny(const value_type* anyof, size_t pos = 0) const noexcept;
 
 		[[nodiscard]]
-		constexpr size_t lastIndexNotOfAny(StringView anyof, size_t pos = 0) const noexcept;
+		constexpr size_t lastIndexNotOfAny(StringView anyof, size_t pos = npos) const noexcept;
 
 		[[nodiscard]]
-		constexpr size_t lastIndexNotOfAny(const value_type* anyof, size_t pos = 0) const noexcept;
+		constexpr size_t lastIndexNotOfAny(const value_type* anyof, size_t pos = npos) const noexcept;
 
 		/// @brief 文字列が指定した文字を含むかを返します。
 		/// @param ch 検索する文字
 		/// @return 指定した文字を含む場合 true, それ以外の場合は false
+		/// @remark `.contains(ch)` と同じです。
 		[[nodiscard]]
 		constexpr bool includes(value_type ch) const noexcept;
 
 		/// @brief 文字列が指定した文字列を含むかを返します。
 		/// @param ch 検索する文字列
 		/// @return 指定した文字列を含む場合 true, それ以外の場合は false
+		/// @remark `.contains(s)` と同じです。
 		[[nodiscard]]
 		constexpr bool includes(StringView s) const noexcept;
 
@@ -269,7 +296,7 @@ namespace s3d
 		[[nodiscard]]
 		uint64 hash() const noexcept;
 
-#if __cpp_impl_three_way_comparison
+#if __cpp_lib_three_way_comparison
 
 		[[nodiscard]]
 		constexpr std::strong_ordering operator <=>(const StringView& rhs) const noexcept = default;

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -46,9 +46,9 @@ namespace s3d
 		return pImpl->setConstant(name, value);
 	}
 
-	bool MathParser::setVaribale(const StringView name, double* value)
+	bool MathParser::setVariable(const StringView name, double* value)
 	{
-		return pImpl->setVaribale(name, value);
+		return pImpl->setVariable(name, value);
 	}
 
 	bool MathParser::setFunction(const StringView name, Fty0 f)

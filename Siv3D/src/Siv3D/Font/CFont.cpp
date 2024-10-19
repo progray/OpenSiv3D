@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -439,6 +439,13 @@ namespace s3d
 			ScopedCustomShader2D ps{ m_shader->getFontShader(font->getMethod(), textStyle.type, hasColor) };
 			return m_fonts[handleID]->getGlyphCache().draw(*font, s, clusters, false, pos, fontSize, textStyle, (hasColor ? ColorF{ 1.0, color.a } : color), lineHeightScale);
 		}
+	}
+
+	bool CFont::fits(const Font::IDType handleID, const StringView s, const Array<GlyphCluster>& clusters, const RectF& area, double fontSize, const double lineHeightScale)
+	{
+		const auto& font = m_fonts[handleID];
+
+		return m_fonts[handleID]->getGlyphCache().fits(*font, s, clusters, area, fontSize, lineHeightScale);
 	}
 
 	bool CFont::draw(const Font::IDType handleID, const StringView s, const Array<GlyphCluster>& clusters, const RectF& area, double fontSize, const TextStyle& textStyle, const ColorF& color, const double lineHeightScale)

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -151,6 +151,10 @@ namespace s3d
 		/// @remark この関数の戻り値を HWND にキャストして使用します。
 		[[nodiscard]]
 		void* GetHWND();
+
+		/// @brief タスクバー上のプログレスバーの進行度を設定します。1.0 を渡すと終了します。
+		/// @param progress0_1 進行度。[0.0, 1.0] の範囲。
+		void SetTaskbarProgressBar(double progress0_1);
 	}
 
 # endif

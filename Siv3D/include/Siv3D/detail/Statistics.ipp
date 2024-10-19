@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -202,7 +202,7 @@ namespace s3d
 				if (auto it = ht.find(*first);
 					it != ht.end())
 				{
-					const size_t keyCount = ++(it.value());
+					const size_t keyCount = ++(it->second);
 
 					if (keyCount > maxCount)
 					{
@@ -257,7 +257,7 @@ namespace s3d
 				if (auto it = ht.find(*first);
 					it != ht.end())
 				{
-					const Count keyCount = ++(it.value().first);
+					const Count keyCount = ++(it->second.first);
 					maxCount = s3d::Max(maxCount, keyCount);
 				}
 				else
@@ -271,7 +271,7 @@ namespace s3d
 
 			Array<std::pair<ValueType, Index>> results;
 
-			for (auto [key, value] : ht)
+			for (auto&& [key, value] : ht)
 			{
 				if (value.first == maxCount)
 				{

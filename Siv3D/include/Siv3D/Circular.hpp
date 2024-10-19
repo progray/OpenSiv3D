@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -14,6 +14,7 @@
 # include "PointVector.hpp"
 # include "FastMath.hpp"
 # include "PredefinedNamedParameter.hpp"
+# include "Interpolation.hpp"
 
 namespace s3d
 {
@@ -58,10 +59,25 @@ namespace s3d
 		[[nodiscard]]
 		position_type operator -(position_type v) const noexcept;
 
+		/// @brief r 成分のみを変更した自身のコピーを返します。
+		/// @param _r r 成分
+		/// @return r 成分を変更したコピー
+		[[nodiscard]]
+		constexpr CircularBase withR(value_type _r) const noexcept;
+
+		/// @brief theta 成分のみを変更した自身のコピーを返します。
+		/// @param _theta theta 成分
+		/// @return theta 成分を変更したコピー
+		[[nodiscard]]
+		constexpr CircularBase withTheta(value_type _theta) const noexcept;
+
 		[[nodiscard]]
 		constexpr CircularBase rotated(value_type angle) const noexcept;
 
 		constexpr CircularBase& rotate(value_type angle) noexcept;
+
+		[[nodiscard]]
+		CircularBase lerp(const CircularBase& other, double f) const noexcept;
 
 		[[nodiscard]]
 		Float2 toFloat2() const noexcept;

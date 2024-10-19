@@ -1,11 +1,11 @@
-//	Copyright (c) 2008-2022 Ryo Suzuki.
-//	Copyright (c) 2016-2022 OpenSiv3D Project.
+//	Copyright (c) 2008-2023 Ryo Suzuki.
+//	Copyright (c) 2016-2023 OpenSiv3D Project.
 //	Licensed under the MIT License.
 
 //
 //	Functions
 //
-@stage(fragment)
+@fragment
 fn main(
 	@builtin(position) Position: vec4<f32>,
 	@location(0) WorldPosition: vec3<f32>,

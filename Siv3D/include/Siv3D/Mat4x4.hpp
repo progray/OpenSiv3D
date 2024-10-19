@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -42,6 +42,9 @@ namespace s3d
 			float m20, float m21, float m22, float m23,
 			float m30, float m31, float m32, float m33
 		) noexcept;
+
+		SIV3D_NODISCARD_CXX20
+		explicit Mat4x4(const float* p) noexcept;
 
 		SIV3D_NODISCARD_CXX20
 		explicit Mat4x4(Quaternion q) noexcept;

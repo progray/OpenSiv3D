@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -15,7 +15,7 @@
 
 namespace s3d
 {
-	P2Polygon::P2Polygon(b2Body& body, const Polygon& polygon, const P2Material& material, const P2Filter& filter)
+	P2Polygon::P2Polygon(b2Body& body, const Polygon& polygon, const P2Material& material, const P2Filter& filter, const bool isSensor)
 		: m_basePolygon{ polygon }
 	{
 		b2PolygonShape m_shape;
@@ -28,7 +28,7 @@ namespace s3d
 
 			m_shape.Set(points, 3);
 
-			const b2FixtureDef fixtureDef = detail::MakeFixtureDef(&m_shape, material, filter);
+			const b2FixtureDef fixtureDef = detail::MakeFixtureDef(&m_shape, material, filter, isSensor);
 
 			m_fixtures.push_back(body.CreateFixture(&fixtureDef));
 		}
@@ -64,8 +64,13 @@ namespace s3d
 
 	Polygon P2Polygon::getPolygon() const
 	{
+		if (m_fixtures.isEmpty())
+		{
+			return m_basePolygon;
+		}
+
 		const b2Transform& transform = m_fixtures.front()->GetBody()->GetTransform();
 
-		return m_basePolygon.transformed(transform.q.s, transform.q.c, Vec2(transform.p.x, transform.p.y));
+		return m_basePolygon.transformed(transform.q.s, transform.q.c, Vec2{ transform.p.x, transform.p.y });
 	}
 }

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -28,5 +28,12 @@ namespace s3d
 		leftPressStopwatch.reset();
 		rightPressStopwatch.reset();
 		cursorStopwatch.reset();
+	}
+
+	inline void TextEditState::resetStopwatches() noexcept
+	{
+		leftPressStopwatch.reset();
+		rightPressStopwatch.reset();
+		cursorStopwatch.restart();
 	}
 }

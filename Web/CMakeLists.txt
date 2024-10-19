@@ -1,24 +1,70 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(OpenSiv3D_Web CXX C)
+project(OpenSiv3D_Web
+    VERSION 0.6.5
+    LANGUAGES CXX C ASM
+    HOMEPAGE_URL "https://github.com/Siv3D/OpenSiv3D"
+    DESCRIPTION "A C++20 framework for creative coding (2D/3D games, media art, visualizers, and simulators)."
+)
 
 option(BUILD_SHARED_LIBS "Build 3rd party libraries as shared libraries (lib*.wasm)." OFF)
 
-set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-missing-field-initializers -DWITH_SDL2_STATIC -DWITH_NOSOUND")
-set(CMAKE_C_FLAGS_DEBUG "-g3 -O0 -pg -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g3 -O2 -pg")
-set(CMAKE_C_FLAGS_MINSIZEREL "-Os -DNDEBUG")
+include(GNUInstallDirs)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unknown-pragmas -DAS_USE_NAMESPACE -DMUPARSER_STATIC -D_UNICODE -DWITH_SDL2_STATIC -DWITH_NOSOUND -DBOOST_ASIO_HAS_STD_INVOKE_RESULT -DASIO_HAS_STD_INVOKE_RESULT")
-set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -pg -DDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g3 -O2 -pg")
-set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG")
+# C flags
+set(SIV3D_C_FLAGS -Wall -Wextra -Wno-missing-field-initializers)
+set(SIV3D_C_FLAGS_DEBUG -g3 -O0 -pg -DDEBUG)
+set(SIV3D_C_FLAGS_RELEASE -O2 -DNDEBUG)
+set(SIV3D_C_FLAGS_RELWITHDEBINFO -g3 -Og -pg)
+set(SIV3D_C_FLAGS_MINSIZEREL -Os -DNDEBUG)
+set(SIV3D_C_DEFINITION
+    WITH_SDL2_STATIC
+    WITH_NOSOUND
+)
+
+# C++ flags
+set(SIV3D_CXX_FLAGS -Wall -Wextra -Wno-unknown-pragmas -Wno-enum-constexpr-conversion -fexceptions)
+set(SIV3D_CXX_FLAGS_DEBUG -g3 -O0 -pg -DDEBUG)
+set(SIV3D_CXX_FLAGS_RELEASE -O2 -DNDEBUG)
+set(SIV3D_CXX_FLAGS_RELWITHDEBINFO -g3 -Og -pg)
+set(SIV3D_CXX_FLAGS_MINSIZEREL -Os -DNDEBUG)
+set(SIV3D_CXX_DEFINITION
+    AS_USE_NAMESPACE
+    MUPARSER_STATIC
+    _UNICODE
+    WITH_SDL2_STATIC
+    WITH_NOSOUND
+    BOOST_ASIO_HAS_STD_INVOKE_RESULT
+    ASIO_HAS_STD_INVOKE_RESULT
+)
+
+# Linker flags
+set(SIV3D_EXE_LINKER_FLAGS
+  $<BUILD_INTERFACE:
+    --js-library=Siv3D.js
+    --pre-js=${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.pre.js
+    --post-js=${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.post.js
+  >
+  $<INSTALL_INTERFACE:
+    --js-library=\${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/Siv3D.js
+    --pre-js=\${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/Siv3D.pre.js
+    --post-js=\${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/Siv3D.post.js
+  >
+  -sUSE_GLFW=3
+  -sUSE_OGG=1
+  -sUSE_VORBIS=1
+  -sFULL_ES3
+  -sMIN_WEBGL_VERSION=2
+  -sMAX_WEBGL_VERSION=2
+  -sERROR_ON_UNDEFINED_SYMBOLS=0
+  -sALLOW_MEMORY_GROWTH=1
+)
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(SIV3D_CXX_FLAGS_WITH_COMPILER -fcolor-diagnostics)
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(SIV3D_CXX_FLAGS_WITH_COMPILER -fdiagnostics-color=always)
+endif()
 
 if (NOT CMAKE_CONFIGURATION_TYPES AND 
     NOT CMAKE_NO_BUILD_TYPE AND
@@ -28,23 +74,20 @@ if (NOT CMAKE_CONFIGURATION_TYPES AND
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  add_compile_options ("-fcolor-diagnostics")
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  add_compile_options ("-fdiagnostics-color=always")
+# Use exception handling when configuration is not MINSIZEREL
+if (CMAKE_BUILD_TYPE STREQUAL "MINSIZEREL")
+  list(APPEND SIV3D_C_FLAGS -sEXCEPTION_CATCHING_ALLOWED=["main","_ZN3s3d7TryMainEv"])
+  list(APPEND SIV3D_CXX_FLAGS -sEXCEPTION_CATCHING_ALLOWED=["main","_ZN3s3d7TryMainEv"])
 endif()
 
-if (NOT CMAKE_BUILD_TYPE STREQUAL "MINSIZEREL")
-  add_compile_options ("SHELL:-s EXCEPTION_CATCHING_ALLOWED=[\"InitSiv3D\"]")
-endif()
-
-if (${CMAKE_C_FLAGS} MATCHES "-msimd128" OR ${CMAKE_CXX_FLAGS} MATCHES "-msimd128")
+if ("${CMAKE_C_FLAGS}" MATCHES "-msimd128" OR "${CMAKE_CXX_FLAGS}" MATCHES "-msimd128")
   set(Siv3DEnableSIMD On)
 else()
-  add_compile_options ("-D_XM_NO_INTRINSICS_")
+  list(APPEND SIV3D_C_DEFINITION _XM_NO_INTRINSICS_)
+  list(APPEND SIV3D_CXX_DEFINITION _XM_NO_INTRINSICS_)
 endif ()
 
-if (${CMAKE_C_FLAGS} MATCHES "-pthread" OR ${CMAKE_CXX_FLAGS} MATCHES "-pthread")
+if ("${CMAKE_C_FLAGS}" MATCHES "-pthread" OR "${CMAKE_CXX_FLAGS}" MATCHES "-pthread")
   set(Siv3DEnablePThread On)
 endif ()
 
@@ -52,19 +95,18 @@ if (BUILD_SHARED_LIBS)
   include(CMake/BuildThirdParty.cmake)
 endif()
 
-if (BUILD_SHARED_LIBS OR ${CMAKE_C_FLAGS} MATCHES "-fPIC" OR ${CMAKE_CXX_FLAGS} MATCHES "-fPIC")
+if (BUILD_SHARED_LIBS OR "${CMAKE_C_FLAGS}" MATCHES "-fPIC" OR "${CMAKE_CXX_FLAGS}" MATCHES "-fPIC")
   set(Siv3DEnablePICBuild On)
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s SIDE_MODULE=1")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s SIDE_MODULE=1")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -s SIDE_MODULE=1")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -s SIDE_MODULE=1")
+  list(APPEND SIV3D_C_FLAGS -sSIDE_MODULE=1)
+  list(APPEND SIV3D_CXX_FLAGS -sSIDE_MODULE=1)
+
   set(CMAKE_SHARED_LIBRARY_SUFFIX ".wasm")
 endif()
 
 
 
-set(SIV3D_SOURCES
+set(SIV3D_INTERNAL_SOURCES
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Siv3DMain.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Audio/NullSoundTouchFunctions.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/AudioCodec/AudioCodecFactory.cpp
@@ -77,7 +119,7 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ChildProcess/ChildProcessDetail.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Clipboard/CClipboard.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Common/OpenGL.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ConstantBuffer/ConstantBufferDetailFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ConstantBuffer/ConstantBufferDetailFactoryWithoutWebGPU.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/CPUInfo/SivCPUInfo.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Cursor/CCursor.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Dialog/SivDialog_Web.cpp
@@ -89,26 +131,28 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/LicenseManager/LicenseManagerFactory.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/LicenseManager/SivLicenseManager.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/MessageBox/SivMessageBox_Web.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Mesh/MeshFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Mesh/MeshFactoryWithoutWebGPU.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Microphone/MicrophoneDetail.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Microphone/SivMicrophone.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/MicrophoneInfo/SivMicrophoneInfo.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Monitor/SivMonitor_Web.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/PowerStatus/SivPowerStatus.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/PseudoThread/PseudoThread.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer/GLES3/CRenderer_GLES3.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer/RendererFactory.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer2D/Renderer2DFactory.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer3D/Renderer3DFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer/RendererFactoryWithoutWebGPU.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer2D/Renderer2DFactoryWithoutWebGPU.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer3D/Renderer3DFactoryWithoutWebGPU.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Resource/CResource.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Resource/SivResource_Web.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Script/CScript.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Shader/ShaderFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Shader/ShaderFactoryWithoutWebGPU.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/SimpleHTTP/SivSimpleHTTP.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/System/CSystem.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/System/SivSystem_Web.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/TCPClient/SivTCPClient.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/TCPClient/TCPClientDetail.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/TextToSpeech/CTextToSpeech.cpp
-  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Texture/TextureFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Texture/TextureFactoryWithoutWebGPU.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/TextInput/CTextInput.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Time/SivTime.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ToastNotification/CToastNotification.cpp
@@ -128,6 +172,7 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/Date/SivDate_macOS_Linux.cpp
   ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/DateTime/SivDateTime_macOS_Linux.cpp
   ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/DLL/SivDLL.cpp
+  ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/DriveInfo/SivDriveInfo.cpp
   ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/EnvironmentVariable/SivEnvironmentVariable.cpp
   ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/Gamepad/CGamepad.cpp
   ../Siv3D/src/Siv3D-Platform/macOS_Linux/Siv3D/Keyboard/CKeyboard.cpp
@@ -212,6 +257,7 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D/BinaryWriter/SivBinaryWriter.cpp
   ../Siv3D/src/Siv3D/Blob/SivBlob.cpp
   ../Siv3D/src/Siv3D/Box/SivBox.cpp
+  ../Siv3D/src/Siv3D/Browser/SivBrowser.cpp
   ../Siv3D/src/Siv3D/Buffer2D/SivBuffer2D.cpp
   ../Siv3D/src/Siv3D/Byte/SivByte.cpp
   ../Siv3D/src/Siv3D/CacheDirectory/CacheDirectory.cpp
@@ -395,6 +441,7 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D/Model/SivModel.cpp
   ../Siv3D/src/Siv3D/ModelObject/SivModelObject.cpp
   ../Siv3D/src/Siv3D/Monitor/SivMonitor.cpp
+  ../Siv3D/src/Siv3D/Morton/SivMorton.cpp
   ../Siv3D/src/Siv3D/Mouse/MouseFactory.cpp
   ../Siv3D/src/Siv3D/Mouse/SivMouse.cpp
   ../Siv3D/src/Siv3D/MSRenderTexture/SivMSRenderTexture.cpp
@@ -404,6 +451,8 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D/Network/CNetwork.cpp
   ../Siv3D/src/Siv3D/Network/NetworkFactory.cpp
   ../Siv3D/src/Siv3D/Network/SivNetwork.cpp
+  ../Siv3D/src/Siv3D/NinePatch/NinePatchDetail.cpp
+  ../Siv3D/src/Siv3D/NinePatch/SivNinePatch.cpp
   ../Siv3D/src/Siv3D/None/SivNone.cpp
   ../Siv3D/src/Siv3D/OpenCV_Bridge/SivOpenCV_Bridge.cpp
   ../Siv3D/src/Siv3D/OrientedBox/SivOrientedBox.cpp
@@ -445,6 +494,7 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D/PixelShaderAssetData/SivPixelShaderAssetData.cpp
   ../Siv3D/src/Siv3D/Plane/SivPlane.cpp
   ../Siv3D/src/Siv3D/PlayingCard/SivPlayingCard.cpp
+  ../Siv3D/src/Siv3D/Point3D/SivPoint3D.cpp
   ../Siv3D/src/Siv3D/Point/SivPoint.cpp
   ../Siv3D/src/Siv3D/Polygon/PolygonDetail.cpp
   ../Siv3D/src/Siv3D/Polygon/SivPolygon.cpp
@@ -518,8 +568,11 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D/Shape2D/SivShape2D.cpp
   ../Siv3D/src/Siv3D/SIMDMath/SivSIMDMath.cpp
   ../Siv3D/src/Siv3D/SimpleAnimation/SivSimpleAnimation.cpp
+  ../Siv3D/src/Siv3D/SimpleFollowCamera3D/SivSimpleFollowCamera3D.cpp
   ../Siv3D/src/Siv3D/SimpleGUI/SivSimpleGUI.cpp
-  ../Siv3D/src/Siv3D/SimpleHTTP/SivSimpleHTTP.cpp
+  # ../Siv3D/src/Siv3D/SimpleHTTP/SivSimpleHTTP.cpp
+  ../Siv3D/src/Siv3D/SimpleMenuBar/SivSimpleMenuBar.cpp
+  ../Siv3D/src/Siv3D/SimpleTable/SivSimpleTable.cpp
   ../Siv3D/src/Siv3D/Sky/SivSky.cpp
   ../Siv3D/src/Siv3D/SoundFont/CSoundFont.cpp
   ../Siv3D/src/Siv3D/SoundFont/SivSoundFont.cpp
@@ -541,6 +594,7 @@ set(SIV3D_SOURCES
   # ../Siv3D/src/Siv3D/TCPClient/TCPClientDetail.cpp
   ../Siv3D/src/Siv3D/TCPServer/SivTCPServer.cpp
   ../Siv3D/src/Siv3D/TCPServer/TCPServerDetail.cpp
+  ../Siv3D/src/Siv3D/TextAreaEditState/SivTextAreaEditState.cpp
   ../Siv3D/src/Siv3D/TextEncoding/SivTextEncoding.cpp
   ../Siv3D/src/Siv3D/TextInput/SivTextInput.cpp
   ../Siv3D/src/Siv3D/TextInput/TextInputFactory.cpp
@@ -567,9 +621,14 @@ set(SIV3D_SOURCES
   ../Siv3D/src/Siv3D/ToastNotification/ToastNotificationFactory.cpp
   ../Siv3D/src/Siv3D/TOMLReader/SivTOMLReader.cpp
   ../Siv3D/src/Siv3D/Triangle/SivTriangle.cpp
+  ../Siv3D/src/Siv3D/TrailMotion/SivTrailMotion.cpp
+  ../Siv3D/src/Siv3D/TrailRenderer/CTrailRenderer.cpp
+  ../Siv3D/src/Siv3D/TrailRenderer/TrailRendererFactory.cpp
+  ../Siv3D/src/Siv3D/Trail/SivTrail.cpp
   ../Siv3D/src/Siv3D/Transformer2D/SivTransformer2D.cpp
   ../Siv3D/src/Siv3D/Transformer3D/SivTransformer3D.cpp
   ../Siv3D/src/Siv3D/Triangle3D/SivTriangle3D.cpp
+  ../Siv3D/src/Siv3D/Troubleshooting/Troubleshooting.cpp
   ../Siv3D/src/Siv3D/Twitter/SivTwitter.cpp
   ../Siv3D/src/Siv3D/Unicode/SivUnicode.cpp
   ../Siv3D/src/Siv3D/Unicode/UnicodeUtility.cpp
@@ -671,8 +730,6 @@ set(SIV3D_THIRDPARTY_SOURCES
   ../Siv3D/src/ThirdParty/double-conversion/double-to-string.cc
   ../Siv3D/src/ThirdParty/double-conversion/fast-dtoa.cc
   ../Siv3D/src/ThirdParty/double-conversion/fixed-dtoa.cc
-  ../Siv3D/src/ThirdParty/double-conversion/string-to-double.cc
-  ../Siv3D/src/ThirdParty/double-conversion/strtod.cc
 
   ../Siv3D/src/ThirdParty/easyexif/exif.cpp
 
@@ -756,9 +813,10 @@ set(SIV3D_THIRDPARTY_SOURCES
   ../Siv3D/src/ThirdParty/msdfgen/core/edge-selectors.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/EdgeHolder.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/equation-solver.cpp
-  ../Siv3D/src/ThirdParty/msdfgen/core/msdf-edge-artifact-patcher.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/msdf-error-correction.cpp
+  ../Siv3D/src/ThirdParty/msdfgen/core/MSDFErrorCorrection.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/msdfgen.cpp
+  ../Siv3D/src/ThirdParty/msdfgen/core/Projection.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/rasterization.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/render-sdf.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/save-bmp.cpp
@@ -769,6 +827,7 @@ set(SIV3D_THIRDPARTY_SOURCES
   ../Siv3D/src/ThirdParty/msdfgen/core/Shape.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/SignedDistance.cpp
   ../Siv3D/src/ThirdParty/msdfgen/core/Vector2.cpp
+  ../Siv3D/src/ThirdParty/msdfgen/ext/resolve-shape-geometry.cpp
 
   ../Siv3D/src/ThirdParty/muparser/muParser.cpp
   ../Siv3D/src/ThirdParty/muparser/muParserBase.cpp
@@ -777,7 +836,14 @@ set(SIV3D_THIRDPARTY_SOURCES
   ../Siv3D/src/ThirdParty/muparser/muParserError.cpp
   ../Siv3D/src/ThirdParty/muparser/muParserInt.cpp
   ../Siv3D/src/ThirdParty/muparser/muParserTokenReader.cpp
-  
+
+  ../Siv3D/src/ThirdParty/nlohmann/json-patch.cpp
+  ../Siv3D/src/ThirdParty/nlohmann/json-schema-draft7.json.cpp
+  ../Siv3D/src/ThirdParty/nlohmann/json-uri.cpp
+  ../Siv3D/src/ThirdParty/nlohmann/json-validator.cpp
+  ../Siv3D/src/ThirdParty/nlohmann/smtp-address-validator.cpp
+  ../Siv3D/src/ThirdParty/nlohmann/string-format-check.cpp
+
   ../Siv3D/src/ThirdParty/Oniguruma/ascii.c
   ../Siv3D/src/ThirdParty/Oniguruma/big5.c
   ../Siv3D/src/ThirdParty/Oniguruma/cp1251.c
@@ -835,9 +901,9 @@ set(SIV3D_THIRDPARTY_SOURCES
   ../Siv3D/src/ThirdParty/plutovg/plutovg-paint.c
   ../Siv3D/src/ThirdParty/plutovg/plutovg-rle.c
   ../Siv3D/src/ThirdParty/plutovg/plutovg.c
-  ../Siv3D/src/ThirdParty/plutovg/sw_ft_math.c
-  ../Siv3D/src/ThirdParty/plutovg/sw_ft_raster.c
-  ../Siv3D/src/ThirdParty/plutovg/sw_ft_stroker.c
+  ../Siv3D/src/ThirdParty/plutovg/plutovg-ft-math.c
+  ../Siv3D/src/ThirdParty/plutovg/plutovg-ft-raster.c
+  ../Siv3D/src/ThirdParty/plutovg/plutovg-ft-stroker.c
 
   ../Siv3D/src/ThirdParty/qr-code-generator-library/qrcodegen.cpp
 
@@ -870,6 +936,79 @@ set(SIV3D_THIRDPARTY_SOURCES
   ../Siv3D/src/ThirdParty/serial/impl/list_ports/list_ports_linux.cc
   ../Siv3D/src/ThirdParty/serial/impl/unix.cc
   ../Siv3D/src/ThirdParty/serial/serial.cc
+
+  ../Siv3D/src/ThirdParty/skia/src/base/SkArenaAlloc.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkBezierCurves.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkBlockAllocator.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkBuffer.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkContainers.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkCubics.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkDeque.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkFloatingPoint.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkHalf.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkMalloc.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkMathPriv.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkQuads.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkSafeMath.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkSemaphore.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkSharedMutex.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkSpinlock.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkTDArray.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkThreadID.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkTSearch.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkUTF.cpp
+  ../Siv3D/src/ThirdParty/skia/src/base/SkUtils.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkCubicClipper.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkEdgeClipper.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkGeometry.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkIDChangeListener.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkLineClipper.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkM44.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkMatrix.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkMatrixInvert.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkPath.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkPathBuilder.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkPathRef.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkPoint.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkRect.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkRRect.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkString.cpp
+  ../Siv3D/src/ThirdParty/skia/src/core/SkStringUtils.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkAddIntersections.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkDConicLineIntersection.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkDCubicLineIntersection.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkDCubicToQuads.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkDLineIntersection.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkDQuadLineIntersection.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkIntersections.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpAngle.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpBuilder.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpCoincidence.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpContour.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpCubicHull.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpEdgeBuilder.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpSegment.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkOpSpan.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsAsWinding.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsCommon.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsConic.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsCubic.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsCurve.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsDebug.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsLine.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsOp.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsQuad.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsRect.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsSimplify.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsTightBounds.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsTSect.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsTypes.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathOpsWinding.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkPathWriter.cpp
+  ../Siv3D/src/ThirdParty/skia/src/pathops/SkReduceOrder.cpp
+  ../Siv3D/src/ThirdParty/skia/src/ports/SkDebug_stdio.cpp
+  ../Siv3D/src/ThirdParty/skia/src/ports/SkDebug_win.cpp
+  ../Siv3D/src/ThirdParty/skia/src/ports/SkMemory_malloc.cpp
 
   ../Siv3D/src/ThirdParty/soloud/src/audiosource/monotone/soloud_monotone.cpp
   ../Siv3D/src/ThirdParty/soloud/src/audiosource/noise/soloud_noise.cpp
@@ -978,6 +1117,13 @@ set(SIV3D_THIRDPARTY_SOURCES
 
 
 set(SIV3D_WEBGPU_SOURCES
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ConstantBuffer/ConstantBufferDetailFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Mesh/MeshFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer/RendererFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer2D/Renderer2DFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer3D/Renderer3DFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Shader/ShaderFactory.cpp
+  ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Texture/TextureFactory.cpp
   ../Siv3D/src/Siv3D-Platform/Web/Siv3D/Renderer/WebGPU/CRenderer_WebGPU.cpp
 
   ../Siv3D/src/Siv3D-Platform/WebGPU/Siv3D/ConstantBuffer/WebGPU/ConstantBufferDetail_WebGPU.cpp
@@ -1013,6 +1159,7 @@ set(SIV3D_SCRIPT_SOURCES
   ../Siv3D/src/Siv3D/Script/Bind/ScriptBezier2.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptBezier3.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptCamera2D.cpp
+  ../Siv3D/src/Siv3D/Script/Bind/ScriptCamera2DParameters.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptCameraControl.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptChar.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptCircle.cpp
@@ -1054,6 +1201,8 @@ set(SIV3D_SCRIPT_SOURCES
   ../Siv3D/src/Siv3D/Script/Bind/ScriptInterpolation.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptKeyboard.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptLanguageCode.cpp
+  ../Siv3D/src/Siv3D/Script/Bind/ScriptLicenseInfo.cpp
+  ../Siv3D/src/Siv3D/Script/Bind/ScriptLicenseManager.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptLine.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptLineString.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptLineStyle.cpp
@@ -1134,6 +1283,7 @@ set(SIV3D_SCRIPT_SOURCES
   ../Siv3D/src/Siv3D/Script/Bind/ScriptWaveSample.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptWindow.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptWindowStyle.cpp
+  ../Siv3D/src/Siv3D/Script/Bind/ScriptXInput.cpp
   ../Siv3D/src/Siv3D/Script/Bind/ScriptYesNo.cpp
   ../Siv3D/src/Siv3D/Script/CScript.cpp
 
@@ -1168,138 +1318,114 @@ set(SIV3D_SCRIPT_SOURCES
   ../Siv3D/src/ThirdParty/angelscript/as_variablescope.cpp
 )
 
+set(SIV3D_INTERNAL_INCLUDE_DIRS
+  ../Siv3D/include
+  ../Siv3D/include/ThirdParty
+  ../Siv3D/src
+  ../Siv3D/src/Siv3D-Platform/Web
+  ../Siv3D/src/Siv3D-Platform/macOS_Linux
+  ../Siv3D/src/Siv3D-Platform/OpenGLES3
+  ../Siv3D/src/Siv3D-Platform/WebGPU
+  ../Siv3D/src/ThirdParty
+  ../Siv3D/src/ThirdParty/asio
+  ../Siv3D/src/ThirdParty/freetype
+  ../Siv3D/src/ThirdParty/skia
+  ../Siv3D/src/ThirdParty/soloud/include
+  ../Siv3D/src/ThirdParty-prebuilt
+  ../Dependencies/boost_1_74_0
+  ${SIV3D_THIRD_PARTY_INCLUDE_DIRS}
+)
+
 
 
 add_library(
-  OpenSiv3D STATIC
-  ${SIV3D_SOURCES}
+  Siv3DPrivateInterface INTERFACE
+)
+target_include_directories(Siv3DPrivateInterface 
+  INTERFACE
+    $<BUILD_INTERFACE: ${SIV3D_INTERNAL_INCLUDE_DIRS}>
+)
+
+add_library(
+  Siv3DInterface INTERFACE
+)
+target_compile_features(Siv3DInterface INTERFACE cxx_std_20 c_std_11)
+target_compile_options(Siv3DInterface INTERFACE
+  $<$<COMPILE_LANGUAGE:CXX>: ${SIV3D_CXX_FLAGS} ${SIV3D_CXX_FLAGS_WITH_COMPILER}
+    $<$<CONFIG:Debug>:   ${SIV3D_CXX_FLAGS_DEBUG}>
+    $<$<CONFIG:Release>: ${SIV3D_CXX_FLAGS_RELEASE}>
+    $<$<CONFIG:RelWithDebInfo>: ${SIV3D_CXX_FLAGS_RELWITHDEBINFO}>
+    $<$<CONFIG:MinSizeRel>: ${SIV3D_CXX_FLAGS_MINSIZEREL}>
+  >
+  $<$<COMPILE_LANGUAGE:C>: ${SIV3D_C_FLAGS} ${SIV3D_CXX_FLAGS_WITH_COMPILER}
+    $<$<CONFIG:Debug>:   ${SIV3D_C_FLAGS_DEBUG}>
+    $<$<CONFIG:Release>: ${SIV3D_C_FLAGS_RELEASE}>
+    $<$<CONFIG:RelWithDebInfo>: ${SIV3D_C_FLAGS_RELWITHDEBINFO}>
+    $<$<CONFIG:MinSizeRel>: ${SIV3D_C_FLAGS_MINSIZEREL}>
+  >
+)
+target_link_options(Siv3DInterface INTERFACE
+  ${SIV3D_EXE_LINKER_FLAGS}
+)
+target_compile_definitions(Siv3DInterface INTERFACE
+  $<$<COMPILE_LANGUAGE:CXX>: ${SIV3D_CXX_DEFINITION}>
+  $<$<COMPILE_LANGUAGE:C>:   ${SIV3D_C_DEFINITION}>
+)
+
+add_library(
+  Siv3D STATIC
+  ${SIV3D_INTERNAL_SOURCES}
   ${SIV3D_THIRDPARTY_SOURCES}
 )
-
-set_target_properties(OpenSiv3D 
-  PROPERTIES 
-    OUTPUT_NAME "Siv3D"
+target_include_directories(Siv3D 
+  INTERFACE
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Siv3D/ThirdParty>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/Siv3D>
 )
-
-target_include_directories(OpenSiv3D
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../Siv3D/include>
-    $<INSTALL_INTERFACE:include/Siv3D> 
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../Siv3D/include/ThirdParty>
-    $<INSTALL_INTERFACE:include/Siv3D/ThirdParty> 
-  PRIVATE
-    ../Siv3D/src
-    ../Siv3D/src/Siv3D-Platform/Web
-    ../Siv3D/src/Siv3D-Platform/macOS_Linux
-    ../Siv3D/src/Siv3D-Platform/OpenGLES3
-    ../Siv3D/src/Siv3D-Platform/WebGPU
-    ../Siv3D/src/ThirdParty
-    ../Siv3D/src/ThirdParty/asio
-    ../Siv3D/src/ThirdParty/freetype
-    ../Siv3D/src/ThirdParty/soloud/include
-    ../Siv3D/src/ThirdParty-prebuilt
-    ../Dependencies/boost_1_74_0
-    ${SIV3D_THIRD_PARTY_INCLUDE_DIRS}
-)
+target_link_libraries(Siv3D 
+  PUBLIC Siv3DInterface
+  PRIVATE Siv3DPrivateInterface)
+add_library(Siv3D::Siv3D ALIAS Siv3D)
 
 
 
 add_library(
-  OpenSiv3DWebGPU STATIC
+  Siv3DWebGPU STATIC
   ${SIV3D_WEBGPU_SOURCES}
 )
-
-set_target_properties(OpenSiv3DWebGPU
-  PROPERTIES 
-    OUTPUT_NAME "Siv3DWebGPU"
-)
-
-target_include_directories(
-  OpenSiv3DWebGPU
-  PRIVATE
-    ../Siv3D/include
-    ../Siv3D/include/ThirdParty
-    ../Siv3D/src
-    ../Siv3D/src/Siv3D-Platform/Web
-    ../Siv3D/src/Siv3D-Platform/macOS_Linux
-    ../Siv3D/src/Siv3D-Platform/OpenGLES3
-    ../Siv3D/src/Siv3D-Platform/WebGPU
-    ../Siv3D/src/ThirdParty
-    ../Siv3D/src/ThirdParty/asio
-    ../Siv3D/src/ThirdParty/freetype
-    ../Siv3D/src/ThirdParty/soloud/include
-    ../Siv3D/src/ThirdParty-prebuilt
-    ../Dependencies/boost_1_74_0
-    ${SIV3D_THIRD_PARTY_INCLUDE_DIRS}
-)
+target_link_libraries(Siv3DWebGPU PRIVATE Siv3DInterface Siv3DPrivateInterface)
+add_library(Siv3D::Siv3DWebGPU ALIAS Siv3DWebGPU)
 
 
 
 add_library(
-  OpenSiv3DScript STATIC
+  Siv3DScript STATIC
   ${SIV3D_SCRIPT_SOURCES}
 )
-
-set_target_properties(OpenSiv3DScript
-  PROPERTIES 
-    OUTPUT_NAME "Siv3DScript"
-)
-
-target_include_directories(
-  OpenSiv3DScript
-  PRIVATE
-    ../Siv3D/include
-    ../Siv3D/include/ThirdParty
-    ../Siv3D/src
-    ../Siv3D/src/Siv3D-Platform/Web
-    ../Siv3D/src/Siv3D-Platform/macOS_Linux
-    ../Siv3D/src/Siv3D-Platform/OpenGLES3
-    ../Siv3D/src/Siv3D-Platform/WebGPU
-    ../Siv3D/src/ThirdParty
-    ../Siv3D/src/ThirdParty/asio
-    ../Siv3D/src/ThirdParty/freetype
-    ../Siv3D/src/ThirdParty/soloud/include
-    ../Siv3D/src/ThirdParty-prebuilt
-    ../Dependencies/boost_1_74_0
-    ${SIV3D_THIRD_PARTY_INCLUDE_DIRS}
-)
+target_link_libraries(Siv3DScript PRIVATE Siv3DInterface Siv3DPrivateInterface)
+add_library(Siv3D::Siv3DScript ALIAS Siv3DScript)
 
 
 
 add_library(
-  OpenSiv3DBrowserImageEncodeDecode STATIC
+  Siv3DBrowserImageEncodeDecode STATIC
     ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ImageFormat/Generic/GenericDecoder.cpp
     ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ImageDecoder/CImageDecoder.cpp
     ../Siv3D/src/Siv3D-Platform/Web/Siv3D/ImageEncoder/CImageEncoder.cpp
 )
+target_link_libraries(Siv3DBrowserImageEncodeDecode PRIVATE Siv3DInterface Siv3DPrivateInterface)
+add_library(Siv3D::Siv3DBrowserImageEncodeDecode ALIAS Siv3DBrowserImageEncodeDecode)
 
-set_target_properties(OpenSiv3DBrowserImageEncodeDecode
-  PROPERTIES 
-    OUTPUT_NAME "Siv3DBrowserImageEncodeDecode"
-)
-
-target_include_directories(
-  OpenSiv3DBrowserImageEncodeDecode
-  PRIVATE
-    ../Siv3D/include
-    ../Siv3D/include/ThirdParty
-    ../Siv3D/src
-    ../Siv3D/src/Siv3D-Platform/Web
-    ../Siv3D/src/Siv3D-Platform/macOS_Linux
-    ../Siv3D/src/Siv3D-Platform/OpenGLES3
-    ../Siv3D/src/Siv3D-Platform/WebGPU
-    ../Siv3D/src/ThirdParty
-    ../Siv3D/src/ThirdParty/asio
-    ../Siv3D/src/ThirdParty/freetype
-    ../Siv3D/src/ThirdParty/soloud/include
-    ../Siv3D/src/ThirdParty-prebuilt
-    ../Dependencies/boost_1_74_0
-    ${SIV3D_THIRD_PARTY_INCLUDE_DIRS}
+set_target_properties(
+  Siv3D Siv3DWebGPU Siv3DScript Siv3DBrowserImageEncodeDecode
+  PROPERTIES
+    C_EXTENSIONS OFF
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+    DEBUG_POSTFIX "d"
 )
 
 
-
-include(GNUInstallDirs)
 
 if (BUILD_SHARED_LIBS)
   set(Siv3DLibraryConfig "wasm-shared")
@@ -1321,79 +1447,251 @@ else()
   set(Siv3DLibraryPostfix ".a")
 endif()
 
-target_link_libraries(OpenSiv3D
-  PUBLIC
-    \${_IMPORT_PREFIX}/lib/Siv3D/opencv/libopencv_objdetect${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/opencv/libopencv_photo${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/opencv/libopencv_imgproc${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/opencv/libopencv_core${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/harfbuzz/libharfbuzz${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/freetype/libfreetype${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/turbojpeg/libturbojpeg${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/giflib/libgif${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/webp/libwebp${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/opus/libopusfile${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/opus/libopus${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/tiff/libtiff${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/png/libpng${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/zlib/libz${Siv3DLibraryPostfix}
-    \${_IMPORT_PREFIX}/lib/Siv3D/SDL2/libSDL2${Siv3DLibraryPostfix}
+set(SIV3D_THIRD_PARTY_LIBRARIES
+  $<BUILD_INTERFACE:
+    -Wl,--no-whole-archive
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/opencv/libopencv_objdetect${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/opencv/libopencv_photo${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/opencv/libopencv_imgproc${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/opencv/libopencv_core${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/harfbuzz/libharfbuzz${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/freetype/libfreetype${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/turbojpeg/libturbojpeg${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/giflib/libgif${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/webp/libwebp${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/opus/libopusfile${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/opus/libopus${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/tiff/libtiff${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/png/libpng${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/zlib/libz${Siv3DLibraryPostfix}
+      ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/SDL2/libSDL2${Siv3DLibraryPostfix}
+  >
+  $<INSTALL_INTERFACE:
+    -Wl,--no-whole-archive
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/opencv/libopencv_objdetect${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/opencv/libopencv_photo${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/opencv/libopencv_imgproc${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/opencv/libopencv_core${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/harfbuzz/libharfbuzz${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/freetype/libfreetype${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/turbojpeg/libturbojpeg${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/giflib/libgif${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/webp/libwebp${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/opus/libopusfile${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/opus/libopus${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/tiff/libtiff${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/png/libpng${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/zlib/libz${Siv3DLibraryPostfix}
+      \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D/SDL2/libSDL2${Siv3DLibraryPostfix}
+  >
 )
 
-install(TARGETS OpenSiv3D
-  EXPORT OpenSiv3DExport
+target_link_libraries(Siv3D INTERFACE
+  ${SIV3D_THIRD_PARTY_LIBRARIES}
+)
+
+set(SIV3D_JSLIBS
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.AudioDecode.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.Clipboard.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.Dialog.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.DragDrop.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.GamePad.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.GLFW.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.HTTPClient.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.ImageDecode.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.KeyBindings.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.MultiTouch.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.Notification.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.System.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.TextInput.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.TextRendering.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.TextToSpeech.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.UserAction.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.WebCam.js
+  ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.WebGPU.js
+)
+
+add_custom_command(
+  OUTPUT Siv3D.js
+  COMMAND cat ${SIV3D_JSLIBS} > Siv3D.js
+  DEPENDS ${SIV3D_JSLIBS}
+)
+
+add_custom_target(Siv3DJSLib
+  DEPENDS
+    Siv3D.js
+)
+
+add_dependencies(Siv3D
+  Siv3DJSLib
+)
+
+# Siv3D install settings
+message(STATUS "[info] CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_PREFIX}/\${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+message(STATUS "[info] CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/Siv3D")
+install(
+  TARGETS Siv3D Siv3DInterface Siv3DPrivateInterface Siv3DBrowserImageEncodeDecode Siv3DScript Siv3DWebGPU
+  EXPORT Siv3DExport
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-
-install(EXPORT OpenSiv3DExport
-  FILE OpenSiv3DConfig.cmake
-  DESTINATION share/cmake/OpenSiv3D/
+install(
+  EXPORT Siv3DExport
+  FILE Siv3DConfig.cmake
+  NAMESPACE Siv3D::
+  EXPORT_LINK_INTERFACE_LIBRARIES
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Siv3D
+)
+install(
+  FILES ../Siv3D/include/Siv3D.hpp ../Siv3D/include/HamFramework.hpp
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Siv3D
+)
+install(
+  DIRECTORY ../Siv3D/include/Siv3D ../Siv3D/include/ThirdParty
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Siv3D
 )
 
-install(TARGETS OpenSiv3DBrowserImageEncodeDecode
-  EXPORT OpenSiv3DBrowserImageEncodeDecodeExport
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+install(
+  DIRECTORY ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/Siv3D
 )
-
-install(EXPORT OpenSiv3DBrowserImageEncodeDecodeExport
-  FILE OpenSiv3DBrowserImageEncodeDecodeConfig.cmake
-  DESTINATION share/cmake/OpenSiv3DBrowserImageEncodeDecode/
-)
-
-install(TARGETS OpenSiv3DScript
-  EXPORT OpenSiv3DScriptExport
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(EXPORT OpenSiv3DScriptExport
-  FILE OpenSiv3DScriptConfig.cmake
-  DESTINATION share/cmake/OpenSiv3DScript/
-)
-
-install(TARGETS OpenSiv3DWebGPU
-  EXPORT OpenSiv3DWebGPUExport
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(EXPORT OpenSiv3DWebGPUExport
-  FILE OpenSiv3DWebGPUConfig.cmake
-  DESTINATION share/cmake/OpenSiv3DWebGPU/
-)
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/../Siv3D/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Siv3D)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/${Siv3DLibraryConfig}/ DESTINATION ${CMAKE_INSTALL_LIBDIR}/Siv3D)
-install(FILES
-    ${PROJECT_SOURCE_DIR}/Siv3D.js
-    ${PROJECT_SOURCE_DIR}/Siv3D.post.js
-    ${PROJECT_SOURCE_DIR}/Siv3D.pre.js
+install(
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/Siv3D.js
+    ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.post.js
+    ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.pre.js
+    ${PROJECT_SOURCE_DIR}/../Siv3D/lib/Web/jslib/Siv3D.SharedMain.pre.js
   DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/Siv3D
+    \${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/Siv3D
 )
+
+add_executable(Siv3DTest
+  ../Test/Siv3DTest.cpp
+  ../Test/Siv3DTest_Array.cpp
+  ../Test/Siv3DTest_AsyncHTTPTask.cpp
+  ../Test/Siv3DTest_AsyncTask.cpp
+  ../Test/Siv3DTest_AudioDecoder.cpp
+  ../Test/Siv3DTest_BinaryReader.cpp
+  ../Test/Siv3DTest_BinaryWriter.cpp
+  ../Test/Siv3DTest_ChildProcess.cpp
+  ../Test/Siv3DTest_Cursor.cpp
+  ../Test/Siv3DTest_Date.cpp
+  ../Test/Siv3DTest_DLL.cpp
+  ../Test/Siv3DTest_DriveInfo.cpp
+  ../Test/Siv3DTest_Eval.cpp
+  #../Test/Siv3DTest_FileSystem.cpp
+  ../Test/Siv3DTest_Format.cpp
+  ../Test/Siv3DTest_HashTable.cpp
+  ../Test/Siv3DTest_Image.cpp
+  ../Test/Siv3DTest_Monitor.cpp
+  ../Test/Siv3DTest_PowerStatus.cpp
+  ../Test/Siv3DTest_RasterizerState.cpp
+  ../Test/Siv3DTest_Resource.cpp
+  ../Test/Siv3DTest_SimpleHTTP.cpp
+  ../Test/Siv3DTest_String.cpp
+  ../Test/Siv3DTest_Stopwatch.cpp
+  ../Test/Siv3DTest_TextEncoding.cpp
+  ../Test/Siv3DTest_TextReader.cpp
+  ../Test/Siv3DTest_TextWriter.cpp
+  ../Test/Siv3DTest_Texture.cpp
+  ../Test/Siv3DTest_Timer.cpp
+  ../Test/Siv3DTest_Unicode.cpp
+  ../Test/Siv3DTest_VideoReader.cpp
+  ../Test/Siv3DTest_Window.cpp
+)
+
+target_include_directories(Siv3DTest PRIVATE
+  ${PROJECT_SOURCE_DIR}/../Test
+)
+target_link_libraries(Siv3DTest PRIVATE Siv3D Siv3DPrivateInterface)
+target_compile_features(Siv3DTest PRIVATE cxx_std_20)
+target_link_options(Siv3DTest PRIVATE
+  --emrun
+  -g2
+  -fexceptions
+  -sASYNCIFY=1
+  --preload-file=${PROJECT_SOURCE_DIR}/../Test/test@/test
+  --preload-file=${PROJECT_SOURCE_DIR}/App/resources@/resources
+  --preload-file=${PROJECT_SOURCE_DIR}/App/example@/example
+)
+set_target_properties(Siv3DTest PROPERTIES
+  SUFFIX ".html"
+)
+
+add_executable(Siv3DUnitTest
+  ../Test/Siv3DTest.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/macOS_Linux/Gamepad/CGamepad.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/macOS_Linux/Gamepad/MockGLFWGamepad.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/macOS_Linux/Keyboard/CKeyboard.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/macOS_Linux/Keyboard/MockGLFWKeyboard.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/Web/Dialog/SivDialog_Web.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/Web/Dialog/MockSiv3DDialog.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/Web/Window/CWindow.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/Web/Window/MockGLFW.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/Web/TextInput/CTextInput.cpp
+  ../Test/Siv3D/src/Siv3D-Platform/Web/TextToSpeech/CTextToSpeech.cpp
+)
+
+target_include_directories(Siv3DUnitTest PRIVATE
+  ${PROJECT_SOURCE_DIR}/../Test
+)
+target_link_libraries(Siv3DUnitTest PRIVATE Siv3D Siv3DPrivateInterface)
+target_compile_features(Siv3DUnitTest PRIVATE cxx_std_20)
+target_link_options(Siv3DUnitTest PRIVATE
+  --emrun
+  -fexceptions
+  -sASYNCIFY=1
+  --preload-file=${PROJECT_SOURCE_DIR}/../Test/test@/test
+  --preload-file=${PROJECT_SOURCE_DIR}/App/resources@/resources
+  --preload-file=${PROJECT_SOURCE_DIR}/App/example@/example
+)
+set_target_properties(Siv3DUnitTest PROPERTIES
+  SUFFIX ".html"
+)
+
+set(SIV3D_ASYNCIFY_IMPORTS
+  siv3dRequestAnimationFrame
+  siv3dGetClipboardText
+  siv3dDecodeImageFromFile
+  siv3dSleepUntilWaked
+  invoke_v
+  invoke_vi
+)
+
+#
+# Helper Functions: target_asyncify_imports, target_asyncify_add, target_exported_functions, target_preload_files
+#
+function(target_add_listed_link_options target option_name)
+  set(option_list ${ARGN})
+  list (TRANSFORM option_list REPLACE ".+" "'\\0'")
+  string (REPLACE ";" "," option_list "${option_list}")
+  target_link_options(${target} PRIVATE -s${option_name}=[${option_list}])
+endfunction()
+
+function(target_asyncify_imports target)
+  target_add_listed_link_options(${target} "ASYNCIFY_IMPORTS" ${ARGN})
+endfunction()
+
+function(target_exported_runtime_methods target)
+  target_add_listed_link_options(${target} "EXPORTED_RUNTIME_METHODS" ${ARGN})
+endfunction()
+
+target_exported_runtime_methods(Siv3DTest siv3dSetThrowJSException)
+target_asyncify_imports(Siv3DTest ${SIV3D_ASYNCIFY_IMPORTS})
+
+target_asyncify_imports(Siv3DUnitTest ${SIV3D_ASYNCIFY_IMPORTS})
+
+if(BUILD_TESTING)
+  enable_testing()
+  add_test(
+    NAME Test
+    COMMAND emrun Siv3DTest.html
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  )
+  add_test(
+    NAME UnitTest
+    COMMAND emrun Siv3DUnitTest.html
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  )
+endif()

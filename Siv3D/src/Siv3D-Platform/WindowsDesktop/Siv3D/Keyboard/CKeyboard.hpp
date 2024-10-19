@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -34,6 +34,10 @@ namespace s3d
 
 		bool up(uint32 index) const override;
 
+		void clearInput(uint32 index) override;
+
+		bool cleared(uint32 index) const override;
+
 		Duration pressedDuration(uint32 index) const override;
 
 		const String& name(uint32 index) const override;
@@ -58,7 +62,7 @@ namespace s3d
 
 		//////
 		//
-		std::mutex m_eventMutex;
+		mutable std::mutex m_eventMutex;
 
 		uint32 m_eventIndex = 0;
 

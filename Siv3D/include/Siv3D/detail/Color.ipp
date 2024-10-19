@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -99,6 +99,26 @@ namespace s3d
 				static_cast<uint8>(~g),
 				static_cast<uint8>(~b),
 				a };
+	}
+
+	inline constexpr Color Color::withR(const uint32 _r) const noexcept
+	{
+		return{ static_cast<uint8>(_r), g, b, a };
+	}
+
+	inline constexpr Color Color::withG(const uint32 _g) const noexcept
+	{
+		return{ r, static_cast<uint8>(_g), b, a };
+	}
+	
+	inline constexpr Color Color::withB(const uint32 _b) const noexcept
+	{
+		return{ r, g, static_cast<uint8>(_b), a };
+	}
+
+	inline constexpr Color Color::withA(const uint32 _a) const noexcept
+	{
+		return{ r, g, b, static_cast<uint8>(_a) };
 	}
 
 	inline constexpr Color& Color::setR(const uint32 _r) noexcept

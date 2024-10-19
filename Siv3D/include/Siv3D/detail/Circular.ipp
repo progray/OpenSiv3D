@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -58,6 +58,18 @@ namespace s3d
 	}
 
 	template <class Float, int32 Oclock>
+	inline constexpr CircularBase<Float, Oclock> CircularBase<Float, Oclock>::withR(const value_type _r) const noexcept
+	{
+		return{ _r, theta };
+	}
+
+	template <class Float, int32 Oclock>
+	inline constexpr CircularBase<Float, Oclock> CircularBase<Float, Oclock>::withTheta(const value_type _theta) const noexcept
+	{
+		return{ r, _theta };
+	}
+
+	template <class Float, int32 Oclock>
 	inline constexpr CircularBase<Float, Oclock> CircularBase<Float, Oclock>::rotated(const value_type angle) const noexcept
 	{
 		return CircularBase{ *this }.rotate(angle);
@@ -69,6 +81,12 @@ namespace s3d
 		theta += angle;
 
 		return *this;
+	}
+
+	template<class Float, int32 Oclock>
+	inline CircularBase<Float, Oclock> CircularBase<Float, Oclock>::lerp(const CircularBase& other, double f) const noexcept
+	{
+		return CircularBase{ Math::Lerp(r, other.r, f), Math::LerpAngle(theta, other.theta, f) };
 	}
 
 	template <class Float, int32 Oclock>

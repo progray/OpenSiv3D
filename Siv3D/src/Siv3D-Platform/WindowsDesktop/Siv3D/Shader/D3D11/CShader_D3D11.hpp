@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -19,6 +19,7 @@
 # include <Siv3D/Common/D3D11.hpp>
 # include <Siv3D/Renderer/D3D11/CRenderer_D3D11.hpp>
 # include <Siv3D/AssetHandleManager/AssetHandleManager.hpp>
+# include <Siv3D/Shader/EngineShader.hpp>
 # include "VertexShader/D3D11VertexShader.hpp"
 # include "PixelShader/D3D11PixelShader.hpp"
 
@@ -67,7 +68,11 @@ namespace s3d
 
 		void setConstantBufferPS(uint32 slot, const ConstantBufferBase& cb) override;
 
+		const VertexShader& getEngineVS(EngineVS vs) const override;
+
 		const PixelShader& getEnginePS(EnginePS ps) const override;
+
+		void setQuadWarpCB(const VS2DQuadWarp& vsCB, const PS2DQuadWarp& psCB) override;
 
 
 		// HLSL シェーダコンパイラが利用可能かを返す
@@ -100,6 +105,11 @@ namespace s3d
 
 		// Shader:: 用の内部シェーダ
 		Array<PixelShader> m_enginePSs;
+
+		// Shader:: 用の内部シェーダ
+		Array<VertexShader> m_engineVSs;
+
+		EngineShaderConstantBuffer m_engineShaderCBs;
 
 		void loadD3DCompile2() const;
 

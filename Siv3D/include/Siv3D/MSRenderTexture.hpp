@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -24,22 +24,22 @@ namespace s3d
 		MSRenderTexture();
 
 		SIV3D_NODISCARD_CXX20
-		MSRenderTexture(uint32 width, uint32 height, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No);
+		MSRenderTexture(uint32 width, uint32 height, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No, HasMipMap hasMipMap = HasMipMap::No);
 
 		SIV3D_NODISCARD_CXX20
-		MSRenderTexture(uint32 width, uint32 height, HasDepth hasDepth);
+		MSRenderTexture(uint32 width, uint32 height, HasDepth hasDepth, HasMipMap hasMipMap = HasMipMap::No);
 
 		SIV3D_NODISCARD_CXX20
-		explicit MSRenderTexture(const Size& size, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No);
+		explicit MSRenderTexture(const Size& size, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No, HasMipMap hasMipMap = HasMipMap::No);
 
 		SIV3D_NODISCARD_CXX20
-		explicit MSRenderTexture(const Size& size, HasDepth hasDepth);
+		explicit MSRenderTexture(const Size& size, HasDepth hasDepth, HasMipMap hasMipMap = HasMipMap::No);
 
 		SIV3D_NODISCARD_CXX20
-		MSRenderTexture(uint32 width, uint32 height, const ColorF& color, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No);
+		MSRenderTexture(uint32 width, uint32 height, const ColorF& color, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No, HasMipMap hasMipMap = HasMipMap::No);
 
 		SIV3D_NODISCARD_CXX20
-		MSRenderTexture(const Size& size, const ColorF& color, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No);
+		MSRenderTexture(const Size& size, const ColorF& color, const TextureFormat& format = TextureFormat::R8G8B8A8_Unorm, HasDepth hasDepth = HasDepth::No, HasMipMap hasMipMap = HasMipMap::No);
 
 		/// @brief レンダリングされたマルチサンプルテクスチャを通常のテクスチャに resolve し、描画可能な状態にします。
 		void resolve() const;

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -102,7 +102,8 @@ namespace s3d
 
 		const int32 width = static_cast<int32>(std::ceil(document->width()));
 		const int32 height = static_cast<int32>(std::ceil(document->height()));
-		const lunasvg::Bitmap bitmap = document->renderToBitmap(width, height, 0x00000000);
+		lunasvg::Bitmap bitmap = document->renderToBitmap(width, height, 0x00000000);
+		bitmap.convert(0, 1, 2, 3, true);
 
 		Image image(bitmap.width(), bitmap.height());
 		assert(image.size_bytes() == (bitmap.stride() * bitmap.height()));

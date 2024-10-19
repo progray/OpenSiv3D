@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -78,7 +78,9 @@ namespace s3d
 		// エンジン PS をロード
 		{
 			m_enginePSs << WGSL{ Resource(U"engine/shader/wgsl/copy.frag.wgsl"), {{ U"PSConstants2D", 0 }} };
+			m_enginePSs << WGSL{ Resource(U"engine/shader/wgsl/gaussian_blur_5.frag.wgsl"), {{ U"PSConstants2D", 0 }} };
 			m_enginePSs << WGSL{ Resource(U"engine/shader/wgsl/gaussian_blur_9.frag.wgsl"), {{ U"PSConstants2D", 0 }} };
+			m_enginePSs << WGSL{ Resource(U"engine/shader/wgsl/gaussian_blur_13.frag.wgsl"), {{ U"PSConstants2D", 0 }} };
 			m_enginePSs << WGSL{ Resource(U"engine/shader/wgsl/apply_srgb_curve.frag.wgsl"), {{ U"PSConstants2D", 0 }} };
 
 			if (not m_enginePSs.all([](const auto& ps) { return !!ps; })) // もしロードに失敗したシェーダがあれば

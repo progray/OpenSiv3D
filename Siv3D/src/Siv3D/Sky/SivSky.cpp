@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -75,7 +75,7 @@ namespace s3d
 			.cloudColor				= cloudColor.rgb(),
 			.skyExposure			= static_cast<float>(exposure),
 
-			.starsRoation = {
+			.starsRotation = {
 				SIMD_Float4{ smat.value.r[0] }.toFloat4(),
 				SIMD_Float4{ smat.value.r[1] }.toFloat4(),
 				SIMD_Float4{ smat.value.r[2] }.toFloat4() },

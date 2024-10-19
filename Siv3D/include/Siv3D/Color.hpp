@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -108,6 +108,30 @@ namespace s3d
 				|| (lhs.a != rhs.a);
 		# endif
 		}
+
+		/// @brief r 成分のみを変更した自身のコピーを返します。
+		/// @param _r r 成分
+		/// @return r 成分を変更したコピー
+		[[nodiscard]]
+		constexpr Color withR(uint32 _r) const noexcept;
+
+		/// @brief g 成分のみを変更した自身のコピーを返します。
+		/// @param _g g 成分
+		/// @return g 成分を変更したコピー
+		[[nodiscard]]
+		constexpr Color withG(uint32 _g) const noexcept;
+
+		/// @brief b 成分のみを変更した自身のコピーを返します。
+		/// @param _b b 成分
+		/// @return b 成分を変更したコピー
+		[[nodiscard]]
+		constexpr Color withB(uint32 _b) const noexcept;
+
+		/// @brief a 成分のみを変更した自身のコピーを返します。
+		/// @param _a a 成分
+		/// @return a 成分を変更したコピー
+		[[nodiscard]]
+		constexpr Color withA(uint32 _a) const noexcept;
 
 		constexpr Color& setR(uint32 _r) noexcept;
 

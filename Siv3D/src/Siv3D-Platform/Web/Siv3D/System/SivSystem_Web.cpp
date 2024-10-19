@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -11,6 +11,7 @@
 
 # include <Siv3D/System.hpp>
 # include <Siv3D/FileSystem.hpp>
+# include <Siv3D/Error.hpp>
 # include <Siv3D/Unicode.hpp>
 # include <emscripten.h>
 
@@ -51,6 +52,16 @@ namespace s3d
 		{
 			return false;
 		}
+
+		bool IsRunningInVisualStudio()
+		{
+			return false;
+		}
+
+		bool IsRunningInXcode()
+		{
+			return false;
+		}
 	}
 
 	namespace Platform::Web::System
@@ -62,9 +73,6 @@ namespace s3d
 				const auto* mainLoop = static_cast<const std::function<void()>*>(userData);
 				mainLoop->operator()();
 			}
-
-			__attribute__((import_name("siv3dGetURLParameters")))
-			extern char **siv3dGetURLParameters();
 		}
 
 		void SetMainLoop(std::function<void()> mainLoop)
@@ -85,31 +93,11 @@ namespace s3d
 			static std::function<void()> g_mainLoop = mainLoop;
 			::emscripten_set_main_loop_arg(&detail::RunMainLoop, &g_mainLoop, 0, 1);
 		}
-
-		HashTable<String, String> GetURLParameters()
-		{
-			int paramReadPos = 0;
-			auto params = detail::siv3dGetURLParameters();
-
-			HashTable<String, String> result;
-
-			while (params[paramReadPos] != nullptr)
-			{
-				auto keyCStr = params[paramReadPos++];
-				auto valueCStr = params[paramReadPos++];
-
-				auto key = Unicode::FromUTF8(keyCStr);
-				auto value = Unicode::FromUTF8(valueCStr);
-
-				result.emplace(key, value);
-
-				::free(keyCStr);
-				::free(valueCStr);
-			}
-			
-			::free(params);
-
-			return result;
-		}
 	}
+}
+
+EMSCRIPTEN_KEEPALIVE
+extern "C" void siv3dThrowException(const char* text)
+{
+	throw s3d::EngineError(s3d::Unicode::FromUTF8(text));
 }

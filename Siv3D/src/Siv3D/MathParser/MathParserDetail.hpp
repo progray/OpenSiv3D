@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -38,7 +38,7 @@ namespace s3d
 		bool setConstant(StringView name, double value);
 
 		[[nodiscard]]
-		bool setVaribale(StringView name, double* value);
+		bool setVariable(StringView name, double* value);
 
 		template <class Fty>
 		[[nodiscard]]

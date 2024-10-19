@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -17,6 +17,7 @@
 # include <Siv3D/ShaderStage.hpp>
 # include <Siv3D/Shader/IShader.hpp>
 # include <Siv3D/AssetHandleManager/AssetHandleManager.hpp>
+# include <Siv3D/Shader/EngineShader.hpp>
 # include "VertexShader/GL4VertexShader.hpp"
 # include "PixelShader/GL4PixelShader.hpp"
 
@@ -62,7 +63,11 @@ namespace s3d
 
 		void setConstantBufferPS(uint32 slot, const ConstantBufferBase& cb) override;
 
+		const VertexShader& getEngineVS(EngineVS vs) const override;
+
 		const PixelShader& getEnginePS(EnginePS ps) const override;
+
+		void setQuadWarpCB(const VS2DQuadWarp& vsCB, const PS2DQuadWarp& psCB) override;
 
 		void usePipeline();
 
@@ -76,6 +81,11 @@ namespace s3d
 
 		// Shader:: 用の内部シェーダ
 		Array<PixelShader> m_enginePSs;
+
+		// Shader:: 用の内部シェーダ
+		Array<VertexShader> m_engineVSs;
+
+		EngineShaderConstantBuffer m_engineShaderCBs;
 
 		GLuint m_pipeline = 0;
 	};

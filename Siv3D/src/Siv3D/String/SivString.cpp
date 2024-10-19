@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -22,6 +22,16 @@ namespace s3d
 		{
 			return (ch <= 0x20) || ((ch - 0x7F) <= (0x9F - 0x7F));
 		};
+	}
+
+	bool String::contains(const value_type ch) const
+	{
+		return (indexOf(ch) != String::npos);
+	}
+
+	bool String::contains(const StringView s) const
+	{
+		return (indexOf(s) != String::npos);
 	}
 
 	bool String::starts_with(const value_type ch) const noexcept
@@ -232,7 +242,9 @@ namespace s3d
 
 	String String::capitalized() const&
 	{
-		return String(*this).capitalize();
+		String result{ *this };
+		result.capitalize();
+		return result;
 	}
 
 	String String::capitalized()&&
@@ -240,6 +252,16 @@ namespace s3d
 		capitalize();
 
 		return std::move(*this);
+	}
+
+	String::value_type& String::choice()
+	{
+		return choice(GetDefaultRNG());
+	}
+
+	const String::value_type& String::choice() const
+	{
+		return choice(GetDefaultRNG());
 	}
 
 	size_t String::count(const value_type ch) const noexcept
@@ -352,7 +374,9 @@ namespace s3d
 
 	String String::lowercased() const&
 	{
-		return String(*this).lowercase();
+		String result{ *this };
+		result.lowercase();
+		return result;
 	}
 
 	String String::lowercased()&&
@@ -452,8 +476,13 @@ namespace s3d
 		return std::move(*this);
 	}
 
-	String String::removed(const StringView s) const
+	String String::removed(const StringView s) const&
 	{
+		if (s.isEmpty())
+		{
+			return *this;
+		}
+
 		String result;
 
 		for (auto it = begin(); it != end();)
@@ -469,6 +498,11 @@ namespace s3d
 		}
 
 		return result;
+	}
+
+	String String::removed(const StringView s) &&
+	{
+		return std::move(remove(s));
 	}
 
 	String& String::remove_at(const size_t index)
@@ -556,7 +590,9 @@ namespace s3d
 
 	String String::replaced(const value_type oldChar, const value_type newChar) const&
 	{
-		return String(*this).replace(oldChar, newChar);
+		String result{ *this };
+		result.replace(oldChar, newChar);
+		return result;
 	}
 
 	String String::replaced(const value_type oldChar, const value_type newChar)&&
@@ -643,7 +679,9 @@ namespace s3d
 
 	String String::rotated(const std::ptrdiff_t count) const&
 	{
-		return String(*this).rotate(count);
+		String result{ *this };
+		result.rotate(count);
+		return result;
 	}
 
 	String String::rotated(const std::ptrdiff_t count)&&
@@ -721,7 +759,7 @@ namespace s3d
 
 	String String::shuffled()&&
 	{
-		return shuffled(GetDefaultRNG());
+		return std::move(*this).shuffled(GetDefaultRNG());
 	}
 
 	Array<String> String::split(const value_type ch) const
@@ -791,7 +829,7 @@ namespace s3d
 		return result;
 	}
 
-	String String::stable_uniqued() const
+	String String::stable_uniqued() const&
 	{
 		String result;
 
@@ -800,6 +838,13 @@ namespace s3d
 		std::copy_if(m_string.begin(), m_string.end(), std::back_inserter(result), std::ref(pred));
 
 		return result;
+	}
+
+	String String::stable_uniqued() &&
+	{
+		// stable_unique() が最適化されたら次の実装に変更する
+		// return std::move(stable_unique());
+		return stable_uniqued();
 	}
 
 	String& String::swapcase() noexcept
@@ -821,7 +866,9 @@ namespace s3d
 
 	String String::swapcased() const&
 	{
-		return String(*this).swapcase();
+		String result{ *this };
+		result.swapcase();
+		return result;
 	}
 
 	String String::swapcased()&&
@@ -842,7 +889,20 @@ namespace s3d
 
 	String String::trimmed() const&
 	{
-		return String(std::find_if_not(m_string.begin(), m_string.end(), detail::IsTrimmable), std::find_if_not(m_string.rbegin(), m_string.rend(), detail::IsTrimmable).base());
+		const char32* start = m_string.data();
+		const char32* end = (start + m_string.size());
+
+		while ((start < end) && detail::IsTrimmable(*start))
+		{
+			++start;
+		}
+
+		while ((start < end) && detail::IsTrimmable(*(end - 1)))
+		{
+			--end;
+		}
+
+		return String(start, end);
 	}
 
 	String String::trimmed()&&
@@ -867,7 +927,9 @@ namespace s3d
 
 	String String::uppercased() const&
 	{
-		return String(*this).uppercase();
+		String result{ *this };
+		result.uppercase();
+		return result;
 	}
 
 	String String::uppercased()&&
@@ -886,7 +948,9 @@ namespace s3d
 
 	String String::rsorted() const&
 	{
-		return String(*this).rsort();
+		String result{ *this };
+		result.rsort();
+		return result;
 	}
 
 	String String::rsorted()&&
@@ -905,7 +969,9 @@ namespace s3d
 
 	String String::sorted() const&
 	{
-		return String(*this).sort();
+		String result{ *this };
+		result.sort();
+		return result;
 	}
 
 	String String::sorted()&&
@@ -937,7 +1003,9 @@ namespace s3d
 
 	String String::sorted_and_uniqued() const&
 	{
-		return String(*this).sort_and_unique();
+		String result{ *this };
+		result.sort_and_unique();
+		return result;
 	}
 
 	String String::sorted_and_uniqued()&&
@@ -1039,7 +1107,7 @@ namespace s3d
 		return (lhs.str() == rhs);
 	}
 
-#if __cpp_impl_three_way_comparison
+#if __cpp_lib_three_way_comparison
 
 	std::strong_ordering operator <=>(const String& lhs, const String::value_type* rhs)
 	{

@@ -2,13 +2,14 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
 //-----------------------------------------------
 
+# include <sstream>
 # include <Siv3D/InputGroups.hpp>
 # include <Siv3D/Keyboard/IKeyboard.hpp>
 # include <Siv3D/Mouse/IMouse.hpp>
@@ -138,6 +139,44 @@ namespace s3d
 		}
 	}
 
+	void Input::clearInput() const
+	{
+		switch (m_deviceType)
+		{
+		case InputDeviceType::Keyboard:
+			SIV3D_ENGINE(Keyboard)->clearInput(m_code);
+			break;
+		case InputDeviceType::Mouse:
+			SIV3D_ENGINE(Mouse)->clearInput(m_code);
+			break;
+		case InputDeviceType::Gamepad:
+			SIV3D_ENGINE(Gamepad)->clearInput(m_playerIndex, m_code);
+			break;
+		case InputDeviceType::XInput:
+			SIV3D_ENGINE(XInput)->clearInput(m_playerIndex, m_code);
+			break;
+		default:
+			break;
+		}
+	}
+
+	bool Input::cleared() const
+	{
+		switch (m_deviceType)
+		{
+		case InputDeviceType::Keyboard:
+			return SIV3D_ENGINE(Keyboard)->cleared(m_code);
+		case InputDeviceType::Mouse:
+			return SIV3D_ENGINE(Mouse)->cleared(m_code);
+		case InputDeviceType::Gamepad:
+			return SIV3D_ENGINE(Gamepad)->cleared(m_playerIndex, m_code);
+		case InputDeviceType::XInput:
+			return SIV3D_ENGINE(XInput)->cleared(m_playerIndex, m_code);
+		default:
+			return false;
+		}
+	}
+
 	Duration Input::pressedDuration() const
 	{
 		switch (m_deviceType)
@@ -173,5 +212,43 @@ namespace s3d
 	void Formatter(FormatData& formatData, const Input& value)
 	{
 		Formatter(formatData, value.name());
+	}
+
+	String Input::Serialize(const Input& input)
+	{
+		if (input.playerIndex())
+		{
+			return U"({}, {}, {})"_fmt(FromEnum(input.deviceType()), input.code(), input.playerIndex());
+		}
+		else
+		{
+			return U"({}, {})"_fmt(FromEnum(input.deviceType()), input.code());
+		}
+	}
+
+	Input Input::Deserialize(const StringView s)
+	{
+		std::istringstream is{ s.toUTF8() };
+
+		char unused;
+		is >> unused;
+
+		uint32 values[3];
+		is
+			>> values[0] >> unused
+			>> values[1] >> unused;
+
+		if (unused == ',')
+		{
+			is >> values[2] >> unused;
+		}
+		else
+		{
+			values[2] = 0;
+		}
+
+		return Input{ ToEnum<InputDeviceType>(static_cast<uint8>(values[0])),
+			static_cast<uint8>(values[1]),
+			static_cast<uint8>(values[2]) };
 	}
 }

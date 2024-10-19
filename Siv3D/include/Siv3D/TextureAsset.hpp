@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -29,12 +29,18 @@ namespace s3d
 		/// @param name テクスチャアセットの登録名
 		/// @param path 登録するテクスチャのファイルパス
 		/// @param desc テクスチャの設定
+		/// @return 登録に成功した場合 true, それ以外の場合は false
 		static bool Register(AssetNameView name, FilePathView path, TextureDesc desc = TextureDesc::Unmipped);
 
 		static bool Register(AssetNameView name, FilePathView rgb, FilePathView alpha, TextureDesc desc = TextureDesc::Unmipped);
 
 		static bool Register(AssetNameView name, const Color& rgb, FilePathView alpha, TextureDesc desc = TextureDesc::Unmipped);
 
+		/// @brief テクスチャアセットを登録します。
+		/// @param name テクスチャアセットの登録名
+		/// @param emoji 登録する絵文字
+		/// @param desc テクスチャの設定
+		/// @return 登録に成功した場合 true, それ以外の場合は false
 		static bool Register(AssetNameView name, const Emoji& emoji, TextureDesc desc = TextureDesc::Mipped);
 
 		static bool Register(AssetNameView name, const Icon& icon, int32 size, TextureDesc desc = TextureDesc::Unmipped);

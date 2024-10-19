@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -87,6 +87,26 @@ namespace s3d
 	inline constexpr HSV HSV::operator -(const HSV& hsv) const noexcept
 	{
 		return{ h - hsv.h, Clamp(s - hsv.s, 0.0, 1.0), Clamp(v - hsv.v, 0.0, 1.0), a };
+	}
+
+	inline constexpr HSV HSV::withH(const double _h) const noexcept
+	{
+		return{ _h, s, v, a };
+	}
+
+	inline constexpr HSV HSV::withS(const double _s) const noexcept
+	{
+		return{ h, _s, v, a };
+	}
+
+	inline constexpr HSV HSV::withV(const double _v) const noexcept
+	{
+		return{ h, s, _v, a };
+	}
+
+	inline constexpr HSV HSV::withA(const double _a) const noexcept
+	{
+		return{ h, s, v, _a };
 	}
 
 	inline constexpr HSV& HSV::setH(const double _h) noexcept

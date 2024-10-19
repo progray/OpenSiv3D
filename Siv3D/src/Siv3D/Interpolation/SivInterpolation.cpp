@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -74,6 +74,41 @@ namespace s3d
 
 	namespace Math
 	{
+		Float2 MoveTowards(const Float2& current, const Float2& target, const float maxSpeed) noexcept
+		{
+			return (current + (target - current).limitLength(maxSpeed));
+		}
+
+		Vec2 MoveTowards(const Vec2& current, const Vec2& target, const double maxSpeed) noexcept
+		{
+			return (current + (target - current).limitLength(maxSpeed));
+		}
+
+		Float3 MoveTowards(const Float3& current, const Float3& target, const float maxSpeed) noexcept
+		{
+			return (current + (target - current).limitLength(maxSpeed));
+		}
+
+		Vec3 MoveTowards(const Vec3& current, const Vec3& target, const double maxSpeed) noexcept
+		{
+			return (current + (target - current).limitLength(maxSpeed));
+		}
+
+		Float4 MoveTowards(const Float4& current, const Float4& target, const float maxSpeed) noexcept
+		{
+			return (current + (target - current).limitLength(maxSpeed));
+		}
+
+		Vec4 MoveTowards(const Vec4& current, const Vec4& target, const double maxSpeed) noexcept
+		{
+			return (current + (target - current).limitLength(maxSpeed));
+		}
+
+		ColorF MoveTowards(const ColorF& current, const ColorF& target, const double maxSpeed) noexcept
+		{
+			return ColorF{ MoveTowards(current.toVec4(), target.toVec4(), maxSpeed) };
+		}
+
 		float Damp(const float a, const float b, const float r, const float dt)
 		{
 			return detail::Damp_impl(a, b, r, dt);
@@ -114,44 +149,60 @@ namespace s3d
 			return detail::Damp_impl(a, b, r, dt);
 		}
 
-		float SmoothDamp(const float from, float to, float& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
+		ColorF Damp(const ColorF& a, const ColorF& b, double r, double dt)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::Damp_impl(a, b, r, dt);
 		}
 
-		double SmoothDamp(const double from, double to, double& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
+		float SmoothDamp(const float current, const float target, float& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
 		}
 
-		Float2 SmoothDamp(const Float2& from, const Float2& to, Float2& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
+		double SmoothDamp(const double current, const double target, double& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
 		}
 
-		Vec2 SmoothDamp(const Vec2& from, const Vec2& to, Vec2& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
+		Float2 SmoothDamp(const Float2& current, const Float2& target, Float2& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
 		}
 
-		Float3 SmoothDamp(const Float3& from, const Float3& to, Float3& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
+		Vec2 SmoothDamp(const Vec2& current, const Vec2& target, Vec2& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
 		}
 
-		Vec3 SmoothDamp(const Vec3& from, const Vec3& to, Vec3& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
+		Float3 SmoothDamp(const Float3& current, const Float3& target, Float3& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
 		}
 
-		Float4 SmoothDamp(const Float4& from, const Float4& to, Float4& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
+		Vec3 SmoothDamp(const Vec3& current, const Vec3& target, Vec3& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
 		}
 
-		Vec4 SmoothDamp(const Vec4& from, const Vec4& to, Vec4& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
+		Float4 SmoothDamp(const Float4& current, const Float4& target, Float4& velocity, const float smoothTime, const Optional<float>& maxSpeed, const float deltaTime)
 		{
-			return detail::SmoothDamp_impl(from, to, velocity, smoothTime, deltaTime, maxSpeed);
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
+		}
+
+		Vec4 SmoothDamp(const Vec4& current, const Vec4& target, Vec4& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
+		{
+			return detail::SmoothDamp_impl(current, target, velocity, smoothTime, deltaTime, maxSpeed);
+		}
+
+		ColorF SmoothDamp(const ColorF& current, const ColorF& target, ColorF& velocity, const double smoothTime, const Optional<double>& maxSpeed, const double deltaTime)
+		{
+			Vec4 vel = velocity.toVec4();
+
+			const Vec4 result = detail::SmoothDamp_impl(current.toVec4(), target.toVec4(), vel, smoothTime, deltaTime, maxSpeed);
+
+			velocity = ColorF{ vel };
+
+			return ColorF{ result };
 		}
 	}
 }

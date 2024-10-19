@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -35,7 +35,7 @@ namespace s3d
 
 	# if SIV3D_PLATFORM(WEB)
 
-		AsyncTask<String> pendingClipboardText;
+		size_t lastCursorPos = 0;
 
 	# endif
 
@@ -49,6 +49,8 @@ namespace s3d
 		explicit TextEditState(String&& defaultText) noexcept;
 		
 		void clear() noexcept;
+
+		void resetStopwatches() noexcept;
 	};
 }
 

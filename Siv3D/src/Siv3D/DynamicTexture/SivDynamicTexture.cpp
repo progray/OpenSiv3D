@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -22,10 +22,16 @@ namespace s3d
 		: Texture{ Texture::Dynamic{}, Size{ width, height }, color, format, desc } {}
 
 	DynamicTexture::DynamicTexture(const Image& image, const TextureDesc desc)
-		: Texture{ Texture::Dynamic{}, image.size(), image.data(), image.stride(), TextureFormat::R8G8B8A8_Unorm, desc } {}
+		: DynamicTexture{ image, TextureFormat::R8G8B8A8_Unorm, desc } {}
 
 	DynamicTexture::DynamicTexture(const Image& image, const TextureFormat& format, const TextureDesc desc)
-		: Texture{ Texture::Dynamic{}, image.size(), image.data(), image.stride(), format, desc } {}
+		: Texture{ Texture::Dynamic{}, image.size(), image.data(), image.stride(), format, desc }
+	{
+		if (detail::HasMipMap(desc))
+		{
+			generateMips();
+		}
+	}
 
 	DynamicTexture::DynamicTexture(const Size& size, const TextureFormat& format, const TextureDesc desc)
 		: Texture{ Texture::Dynamic{}, size, nullptr, 0, format, desc } {}
@@ -109,6 +115,16 @@ namespace s3d
 		}
 
 		return SIV3D_ENGINE(Texture)->fillRegion(m_handle->id(), image.data(), image.stride(), rect, false);
+	}
+
+	void DynamicTexture::generateMips()
+	{
+		if (isEmpty())
+		{
+			return;
+		}
+
+		SIV3D_ENGINE(Texture)->generateMips(m_handle->id());
 	}
 
 	void DynamicTexture::swap(DynamicTexture& other) noexcept

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -132,15 +132,15 @@ namespace s3d
 		[[nodiscard]]
 		constexpr bool epsilonEquals(Vector2D other, value_type epsilon) const noexcept;
 
-		/// @brief 指定した別のベクトルとのなす角が 180 ° 未満であるかを返します。
+		/// @brief 指定した別のベクトルとのなす角が 90° 未満であるかを返します。
 		/// @param other 別のベクトル
-		/// @return 別のベクトルとのなす角が 180 ° 未満である場合 true, それ以外の場合は false
+		/// @return 別のベクトルとのなす角が 90° 未満である場合 true, それ以外の場合は false
 		[[nodiscard]]
 		constexpr bool hasSameDirection(Vector2D other) const noexcept;
 
-		/// @brief 指定した別のベクトルとのなす角が 180 ° より大きいかを返します。
+		/// @brief 指定した別のベクトルとのなす角が 90° より大きいかを返します。
 		/// @param other 別のベクトル
-		/// @return 別のベクトルとのなす角が 180 ° より大きい場合 true, それ以外の場合は false
+		/// @return 別のベクトルとのなす角が 90° より大きい場合 true, それ以外の場合は false
 		[[nodiscard]]
 		constexpr bool hasOppositeDirection(Vector2D other) const noexcept;
 
@@ -166,6 +166,18 @@ namespace s3d
 
 		/// @brief 各成分を 0 にセットします。
 		constexpr void clear() noexcept;
+
+		/// @brief x 成分のみを変更した自身のコピーを返します。
+		/// @param _x x 成分
+		/// @return x 成分を変更したコピー
+		[[nodiscard]]
+		constexpr Vector2D withX(value_type _x) const noexcept;
+
+		/// @brief y 成分のみを変更した自身のコピーを返します。
+		/// @param _y y 成分
+		/// @return y 成分を変更したコピー
+		[[nodiscard]]
+		constexpr Vector2D withY(value_type _y) const noexcept;
 
 		/// @brief 各成分を変更します。
 		/// @param _x 新しい X 成分
@@ -310,6 +322,12 @@ namespace s3d
 		/// @return *this
 		Vector2D& normalize() noexcept;
 
+		/// @brief 正規化した（大きさを 1 にした）ベクトルを返します。ゼロベクトルの場合は valueIfZero を返します。
+		/// @param valueIfZero ゼロベクトルの場合に返すベクトル
+		/// @return 正規化した（大きさを 1 にした）ベクトル、または valueIfZero
+		[[nodiscard]]
+		Vector2D normalized_or(Vector2D valueIfZero) const noexcept;
+
 		[[nodiscard]]
 		Vector2D rotated(value_type angle) const noexcept;
 
@@ -319,6 +337,30 @@ namespace s3d
 		Vector2D rotatedAt(Vector2D center, value_type angle) const noexcept;
 
 		Vector2D& rotateAt(Vector2D center, value_type angle) noexcept;
+
+		/// @brief 時計回りに 90°* n 回転したベクトルを返します。
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return 時計回りに 90°* n 回転したベクトル
+		[[nodiscard]]
+		constexpr Vector2D rotated90(int32 n = 1) const noexcept;
+
+		/// @brief 自身を時計回りに 90°* n 回転します。
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return *this
+		constexpr Vector2D& rotate90(int32 n = 1) noexcept;
+
+		/// @brief centerを中心とし、時計回りに 90°* n 回転したベクトルを返します。
+		/// @param center 回転の中心座標
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return centerを中心とし、時計回りに 90°* n 回転したベクトル
+		[[nodiscard]]
+		constexpr Vector2D rotated90At(Vector2D center, int32 n = 1) const noexcept;
+
+		/// @brief centerを中心とし、自身を時計回りに 90°* n 回転します。
+		/// @param center 回転の中心座標
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return *this
+		constexpr Vector2D& rotate90At(Vector2D center, int32 n = 1) noexcept;
 
 		[[nodiscard]]
 		value_type getAngle() const noexcept;

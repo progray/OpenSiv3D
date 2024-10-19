@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -134,16 +134,14 @@ namespace s3d
 		friend constexpr bool operator ==(const Ellipse& lhs, const Ellipse& rhs) noexcept
 		{
 			return (lhs.center == rhs.center)
-				&& (lhs.a == rhs.a)
-				&& (lhs.b == rhs.b);
+				&& (lhs.axes == rhs.axes);
 		}
 
 		[[nodiscard]]
 		friend constexpr bool operator !=(const Ellipse& lhs, const Ellipse& rhs) noexcept
 		{
 			return (lhs.center != rhs.center)
-				|| (lhs.a != rhs.a)
-				|| (lhs.b != rhs.b);
+				|| (lhs.axes != rhs.axes);
 		}
 
 		constexpr Ellipse& set(value_type _x, value_type _y, size_type _a, size_type _b) noexcept;

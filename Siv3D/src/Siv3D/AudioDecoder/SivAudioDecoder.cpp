@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -13,6 +13,7 @@
 # include <Siv3D/BinaryReader.hpp>
 # include "IAudioDecoder.hpp"
 # include <Siv3D/Common/Siv3DEngine.hpp>
+# include <Siv3D/Browser.hpp>
 
 namespace s3d
 {
@@ -49,6 +50,10 @@ namespace s3d
 
 		Wave Decode(const FilePathView path, const StringView decoderName)
 		{
+		# if SIV3D_PLATFORM(WEB)
+			Platform::Web::FetchFile(path);
+		# endif
+
 			BinaryReader reader{ path };
 
 			if (not reader)

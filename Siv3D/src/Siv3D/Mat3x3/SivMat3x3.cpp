@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -42,6 +42,21 @@ namespace s3d
 		const float m22 = (y01 - y00 + m23 * y01);
 
 		return{ m11, m12, m13, m21, m22, m23, m31, m32, 1.0f };
+	}
+
+	Mat3x3 Mat3x3::Homography(const RectF& from, const RectF& to)
+	{
+		return Homography(from.asQuad(), to.asQuad());
+	}
+
+	Mat3x3 Mat3x3::Homography(const RectF& from, const Quad& to)
+	{
+		return Homography(from.asQuad(), to);
+	}
+
+	Mat3x3 Mat3x3::Homography(const Quad& from, const RectF& to)
+	{
+		return Homography(from, to.asQuad());
 	}
 
 	Mat3x3 Mat3x3::Homography(const Quad& from, const Quad& to)

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -72,9 +72,9 @@ namespace s3d
 
  	namespace Platform::Web::AudioDecoder
 	{
-		void DecodeFromFile(const FilePath& path, std::promise<Wave> p);
+		void DecodeFromFile(const FilePathView path, std::promise<Wave> p);
 		
-		AsyncTask<Wave> DecodeFromFile(const FilePath& path);
+		AsyncTask<Wave> DecodeFromFile(const FilePathView path);
 	}
 
 # endif

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -45,9 +45,9 @@ namespace s3d
 
 		virtual bool isRegistered(AssetType assetType, AssetNameView name) const = 0;
 
-		virtual bool load(AssetType assetType, AssetNameView name, const String& hint) = 0;
+		virtual bool load(AssetType assetType, AssetNameView name, StringView hint) = 0;
 
-		virtual void loadAsync(AssetType assetType, AssetNameView name, const String& hint) = 0;
+		virtual void loadAsync(AssetType assetType, AssetNameView name, StringView hint) = 0;
 
 		virtual void wait(AssetType assetType, AssetNameView name) = 0;
 

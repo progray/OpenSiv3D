@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -44,10 +44,11 @@ namespace s3d
 		/// @param filters ダイアログに表示するファイルの拡張子のフィルタ
 		/// @param defaultDirectory ダイアログで表示するデフォルトディレクトリ。空の場合は OS のデフォルト
 		/// @param title ダイアログのタイトル。空の場合は OS のデフォルト
+		/// @param defaultFileName ダイアログに表示するデフォルトのファイル名
 		/// @remark この関数はファイルの保存は行いません。戻り値をファイル保存系の関数と組み合わせて使ってください。
 		/// @return 選択されたファイルパス。選択されなかった場合は none
 		[[nodiscard]]
-		Optional<FilePath> SaveFile(const Array<FileFilter>& filters = {}, FilePathView defaultDirectory = U"", StringView title = U"");
+		Optional<FilePath> SaveFile(const Array<FileFilter>& filters = {}, FilePathView defaultDirectory = U"", StringView title = U"", StringView defaultFileName = U"");
 
 		/// @brief フォルダ選択ダイアログを表示し、選択されたフォルダを返します。
 		/// @param defaultDirectory ダイアログで表示するデフォルトディレクトリ。空の場合は OS のデフォルト
@@ -150,13 +151,6 @@ namespace s3d
 		/// @return 作成した音声。ファイルが選択されなかった場合は空の Audio
 		[[nodiscard]]
 		AsyncTask<Audio> OpenAudio(Audio::FileStreaming f, FilePathView defaultDirectory = U"", StringView title = U"");
-	}
-
-	namespace Platform::Web
-	{
-		/// @brief ブラウザ上の仮想ファイルをローカルにダウンロードします。
-		/// @param filePath ブラウザ上の仮想ファイルへのパス
-		void DownloadFile(FilePathView filePath);
 	}
 
 # endif

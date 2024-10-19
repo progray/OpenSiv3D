@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -59,6 +59,13 @@ namespace s3d
 		/// @return *this
 		P2Body& addLine(const Line& localPos, OneSided oneSided, const P2Material& material = {}, const P2Filter& filter = {});
 
+		/// @brief 線分のセンサー部品を物体に追加します。
+		/// @remark `P2Line` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addLineSensor(const Line& localPos, const P2Filter& filter = {});
+
 		/// @brief 連続する複数の線分の部品を物体に追加します。
 		/// @remark `P2LineString` の部品を物体に追加します。
 		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
@@ -68,6 +75,13 @@ namespace s3d
 		/// @return *this
 		P2Body& addLineString(const LineString& localPos, OneSided oneSided, const P2Material& material = {}, const P2Filter& filter = {});
 
+		/// @brief 連続する複数の線分のセンサー部品を物体に追加します。
+		/// @remark `P2LineString` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addLineStringSensor(const LineString& localPos, const P2Filter& filter = {});
+
 		/// @brief 連続する複数の線分（終点と始点を結ぶ）の部品を物体に追加します。
 		/// @remark `P2LineString` の部品を物体に追加します。
 		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
@@ -76,6 +90,13 @@ namespace s3d
 		/// @param filter 部品の干渉フィルタ
 		/// @return *this
 		P2Body& addClosedLineString(const LineString& localPos, OneSided oneSided, const P2Material& material = {}, const P2Filter& filter = {});
+
+		/// @brief 連続する複数の線分（終点と始点を結ぶ）のセンサー部品を物体に追加します。
+		/// @remark `P2LineString` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addClosedLineStringSensor(const LineString& localPos, const P2Filter& filter = {});
 
 		/// @brief 円の部品を物体に追加します。
 		/// @remark `P2Circle` の部品を物体に追加します。
@@ -100,6 +121,13 @@ namespace s3d
 		/// @return *this
 		P2Body& addRect(const RectF& localPos, const P2Material& material = {}, const P2Filter& filter = {});
 
+		/// @brief 長方形のセンサー部品を物体に追加します。
+		/// @remark `P2Rect` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addRectSensor(const RectF& localPos, const P2Filter& filter = {});
+
 		/// @brief 三角形の部品を物体に追加します。
 		/// @remark `P2Triangle` の部品を物体に追加します。
 		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
@@ -107,6 +135,13 @@ namespace s3d
 		/// @param filter 部品の干渉フィルタ
 		/// @return *this
 		P2Body& addTriangle(const Triangle& localPos, const P2Material& material = {}, const P2Filter& filter = {});
+
+		/// @brief 三角形のセンサー部品を物体に追加します。
+		/// @remark `P2Triangle` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addTriangleSensor(const Triangle& localPos, const P2Filter& filter = {});
 
 		/// @brief 凸な四角形の部品を物体に追加します。
 		/// @remark `P2Quad` の部品を物体に追加します。
@@ -116,6 +151,13 @@ namespace s3d
 		/// @return *this
 		P2Body& addQuad(const Quad& localPos, const P2Material& material = {}, const P2Filter& filter = {});
 
+		/// @brief 凸な四角形のセンサー部品を物体に追加します。
+		/// @remark `P2Quad` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addQuadSensor(const Quad& localPos, const P2Filter& filter = {});
+
 		/// @brief 多角形の部品を物体に追加します。
 		/// @remark `P2Polygon` の部品を物体に追加します。
 		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
@@ -123,6 +165,13 @@ namespace s3d
 		/// @param filter 部品の干渉フィルタ
 		/// @return *this
 		P2Body& addPolygon(const Polygon& localPos, const P2Material& material = {}, const P2Filter& filter = {});
+
+		/// @brief 多角形のセンサー部品を物体に追加します。
+		/// @remark `P2Polygon` の部品を物体に追加します。
+		/// @param localPos 物体のワールド座標から見たローカルでの形状の座標 (cm) 
+		/// @param filter センサーの干渉フィルタ
+		/// @return *this
+		P2Body& addPolygonSensor(const Polygon& localPos, const P2Filter& filter = {});
 
 		/// @brief 複数の多角形の部品を物体に追加します。
 		/// @remark 複数の `P2Polygon` の部品を物体に追加します。
@@ -132,35 +181,35 @@ namespace s3d
 		/// @return *this
 		P2Body& addPolygons(const MultiPolygon& localPos, const P2Material& material = {}, const P2Filter& filter = {});
 
-		/// @brief 
-		/// @param enabled 
-		/// @return 
+		/// @brief スリープを有効にするかを設定します（デフォルトでは有効）
+		/// @param enabled 有効にする場合 true, 無効にする場合 false
+		/// @return *this
 		P2Body& setSleepEnabled(bool enabled) noexcept;
 
-		/// @brief 
-		/// @return 
+		/// @brief スリープが有効な設定になっているかを返します。
+		/// @return スリープが有効な場合 true, それ以外の場合は false
 		[[nodiscard]]
 		bool getSleepEnabled() const noexcept;
 
-		/// @brief 
-		/// @param awake 
-		/// @return 
+		/// @brief スリープを設定します
+		/// @param awake スリープを解除する場合 true, それ以外の場合は false 
+		/// @return *this
 		P2Body& setAwake(bool awake) noexcept;
 
-		/// @brief 
-		/// @return 
+		/// @brief スリープしていないかを返します。
+		/// @return スリープしていない場合 true, それ以外の場合は false
 		[[nodiscard]]
 		bool isAwake() const noexcept;
 
-		/// @brief 
-		/// @param x 
-		/// @param y 
-		/// @return 
+		/// @brief 物体の位置を強制的に変更します。
+		/// @param x 新しい位置の X 座標
+		/// @param y 新しい位置の Y 座標
+		/// @return *this
 		P2Body& setPos(double x, double y) noexcept;
 
-		/// @brief 
-		/// @param pos 
-		/// @return 
+		/// @brief 物体の位置を強制的に変更します。
+		/// @param pos 新しい位置
+		/// @return *this
 		P2Body& setPos(Vec2 pos) noexcept;
 
 		/// @brief 
@@ -197,48 +246,48 @@ namespace s3d
 		/// @return 
 		P2Body& setTransform(Vec2 pos, double angle) noexcept;
 
-		/// @brief 
-		/// @param force 
-		/// @return 
+		/// @brief 物体に力を加えます。
+		/// @param force 力のベクトル
+		/// @return *this
 		P2Body& applyForce(Vec2 force) noexcept;
 
-		/// @brief 
-		/// @param force 
-		/// @param offset 
-		/// @return 
+		/// @brief 物体に力を加えます。
+		/// @param force 力のベクトル
+		/// @param offset 力を加える位置（物体からの相対位置）
+		/// @return *this
 		P2Body& applyForce(Vec2 force, Vec2 offset) noexcept;
 
-		/// @brief 
-		/// @param force 
-		/// @param pos 
-		/// @return 
+		/// @brief 物体に力を加えます。
+		/// @param force 力のベクトル
+		/// @param pos 力を加える位置（ワールド座標）
+		/// @return *this
 		P2Body& applyForceAt(Vec2 force, Vec2 pos) noexcept;
 
-		/// @brief 
-		/// @param force 
-		/// @return 
+		/// @brief 物体に力を即座に加えます。
+		/// @param force 力のベクトル
+		/// @return *this
 		P2Body& applyLinearImpulse(Vec2 force) noexcept;
 
-		/// @brief 
-		/// @param force 
-		/// @param offset 
-		/// @return 
+		/// @brief 物体に力を即座に加えます。
+		/// @param force 力のベクトル
+		/// @param offset 力を加える位置（物体からの相対位置）
+		/// @return *this
 		P2Body& applyLinearImpulse(Vec2 force, Vec2 offset) noexcept;
 
-		/// @brief 
-		/// @param force 
-		/// @param pos 
-		/// @return 
+		/// @brief 物体に力を即座に加えます。
+		/// @param force 力のベクトル
+		/// @param pos 力を加える位置（ワールド座標）
+		/// @return *this
 		P2Body& applyLinearImpulseAt(Vec2 force, Vec2 pos) noexcept;
 
-		/// @brief 
-		/// @param torque 
-		/// @return 
+		/// @brief 物体に回転の力を加えます。
+		/// @param torque 回転の力
+		/// @return *this
 		P2Body& applyTorque(double torque) noexcept;
 
-		/// @brief 
-		/// @param torque 
-		/// @return 
+		/// @brief 物体に回転の力を即座に加えます。
+		/// @param torque 回転の力
+		/// @return *this
 		P2Body& applyAngularImpulse(double torque) noexcept;
 
 		/// @brief 物体のワールド座標 (cm) を返します。
@@ -327,7 +376,17 @@ namespace s3d
 		[[nodiscard]]
 		P2BodyType getBodyType() const noexcept;
 
-		/// @brief 物体の回転の無効・有効を設定します（デフォルトは有効）
+		/// @brief 物体を弾丸モードにするかを設定します（デフォルトでは無効）
+		/// @param bullet 弾丸モードにする場合 true, しない場合は false
+		/// @remark 弾丸モードでは、高速に移動する際の貫通が抑制されます。
+		/// @return *this
+		P2Body& setBullet(bool bullet) noexcept;
+
+		/// @brief 物体が弾丸モードであるかを返します。
+		/// @return 弾丸モードである場合 true, それ以外の場合は false
+		bool isBullet() const noexcept;
+
+		/// @brief 物体の回転の無効・有効を設定します（デフォルトでは有効）
 		/// @param fixedRotation 回転を有効にするか
 		/// @return *this
 		P2Body& setFixedRotation(bool fixedRotation) noexcept;
@@ -359,21 +418,21 @@ namespace s3d
 		[[nodiscard]]
 		size_t num_shapes() const noexcept;
 
-		/// @brief 
-		/// @param index 
-		/// @return 
+		/// @brief 物体の部品への参照を返します。
+		/// @param index 部品のインデックス
+		/// @return 物体の部品への参照
 		[[nodiscard]]
 		P2Shape& shape(size_t index);
 
-		/// @brief 
-		/// @param index 
-		/// @return 
+		/// @brief 物体の部品への参照を返します。
+		/// @param index 部品のインデックス
+		/// @return 物体の部品への参照
 		[[nodiscard]]
 		const P2Shape& shape(size_t index) const;
 
-		/// @brief 
-		/// @param index 
-		/// @return 
+		/// @brief 物体の部品へのポインタを返します。
+		/// @param index 部品のインデックス
+		/// @return 物体の部品へのポインタ
 		[[nodiscard]]
 		const std::shared_ptr<P2Shape>& getPtr(size_t index) const noexcept;
 

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -260,6 +260,24 @@ namespace s3d
 		}
 	}
 
+	void CRenderer2D_D3D11::addRectFrameTB(const FloatRect& rect, const float thickness, const Float4& topColor, const Float4& bottomColor)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildRectFrameTB(m_bufferCreator, rect, thickness, topColor, bottomColor))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->shapeID);
+			}
+
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
 	void CRenderer2D_D3D11::addCircle(const Float2& center, const float r, const Float4& innerColor, const Float4& outerColor)
 	{
 		if (const auto indexCount = Vertex2DBuilder::BuildCircle(m_bufferCreator, center, r, innerColor, outerColor, getMaxScaling()))
@@ -317,6 +335,24 @@ namespace s3d
 	void CRenderer2D_D3D11::addCircleArc(const LineStyle& style, const Float2& center, const float rInner, const float startAngle, const float angle, const float thickness, const Float4& innerColor, const Float4& outerColor)
 	{
 		if (const auto indexCount = Vertex2DBuilder::BuildCircleArc(m_bufferCreator, style, center, rInner, startAngle, angle, thickness, innerColor, outerColor, getMaxScaling()))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->shapeID);
+			}
+
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
+	void CRenderer2D_D3D11::addCircleSegment(const Float2& center, const float r, const float startAngle, const float angle, const Float4& color)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildCircleSegment(m_bufferCreator, center, r, startAngle, angle, color, getMaxScaling()))
 		{
 			if (not m_currentCustomVS)
 			{
@@ -422,9 +458,45 @@ namespace s3d
 		}
 	}
 
+	void CRenderer2D_D3D11::addRoundRect(const FloatRect& rect, const float w, const float h, const float r, const Float4& topColor, const Float4& bottomColor)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildRoundRect(m_bufferCreator, m_buffer, rect, w, h, r, topColor, bottomColor, getMaxScaling()))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->shapeID);
+			}
+
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
 	void CRenderer2D_D3D11::addRoundRectFrame(const RoundRect& outer, const RoundRect& inner, const Float4& color)
 	{
 		if (const auto indexCount = Vertex2DBuilder::BuildRoundRectFrame(m_bufferCreator, m_buffer, outer, inner, color, getMaxScaling()))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->shapeID);
+			}
+
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
+	void CRenderer2D_D3D11::addRoundRectFrame(const RoundRect& outer, const RoundRect& inner, const Float4& topColor, const Float4& bottomColor)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildRoundRectFrame(m_bufferCreator, m_buffer, outer, inner, topColor, bottomColor, getMaxScaling()))
 		{
 			if (not m_currentCustomVS)
 			{
@@ -668,6 +740,63 @@ namespace s3d
 			}
 
 			m_commandManager.pushPSTexture(0, texture);
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
+	void CRenderer2D_D3D11::addRectShadow(const FloatRect& rect, const float blur, const Float4& color, const bool fill)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildRectShadow(m_bufferCreator, rect, blur, color, fill))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->textureID);
+			}
+
+			m_commandManager.pushPSTexture(0, getBoxShadowTexture());
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
+	void CRenderer2D_D3D11::addCircleShadow(const Circle& circle, const float blur, const Float4& color)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildCircleShadow(m_bufferCreator, circle, blur, color, getMaxScaling()))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->textureID);
+			}
+
+			m_commandManager.pushPSTexture(0, getBoxShadowTexture());
+			m_commandManager.pushDraw(indexCount);
+		}
+	}
+
+	void CRenderer2D_D3D11::addRoundRectShadow(const RoundRect& roundRect, const float blur, const Float4& color, const bool fill)
+	{
+		if (const auto indexCount = Vertex2DBuilder::BuildRoundRectShadow(m_bufferCreator, roundRect, blur, color, getMaxScaling(), fill))
+		{
+			if (not m_currentCustomVS)
+			{
+				m_commandManager.pushStandardVS(m_standardVS->spriteID);
+			}
+
+			if (not m_currentCustomPS)
+			{
+				m_commandManager.pushStandardPS(m_standardPS->textureID);
+			}
+
+			m_commandManager.pushPSTexture(0, getBoxShadowTexture());
 			m_commandManager.pushDraw(indexCount);
 		}
 	}
@@ -1157,7 +1286,7 @@ namespace s3d
 						ID3D11RenderTargetView* const rtv = pTexture->getRTV(rt->id());
 						pRenderer->getBackBuffer().bindToContext(rtv, nullptr);
 						
-						LOG_COMMAND(U"SetRT[{}] (texture {})"_fmt(command.index, rt->id().value));
+						LOG_COMMAND(U"SetRT[{}] (texture {})"_fmt(command.index, rt->id().value()));
 					}
 					else // [シーン]
 					{

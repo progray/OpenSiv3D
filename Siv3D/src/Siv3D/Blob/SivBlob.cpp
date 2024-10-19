@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -20,8 +20,8 @@ namespace s3d
 	Blob::Blob(const size_t sizeBytes)
 		: m_data(sizeBytes) {}
 
-	Blob::Blob(const Arg::reserve_<size_t> resrveSizeBytes)
-		: m_data(resrveSizeBytes) {}
+	Blob::Blob(const Arg::reserve_<size_t> reserveSizeBytes)
+		: m_data(reserveSizeBytes) {}
 
 	Blob::Blob(const FilePathView path)
 	{

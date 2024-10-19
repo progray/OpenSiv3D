@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -24,7 +24,7 @@ namespace s3d
 		/// @param height 元の画像の高さ（ピクセル）
 		/// @return 作成されるミップマップ画像の枚数
 		[[nodiscard]]
-		inline constexpr size_t CalculateMipCount(uint32 width, uint32 height) noexcept;
+		inline constexpr size_t CalculateMipCount(size_t width, size_t height) noexcept;
 
 		/// @brief 画像からミップマップ画像を作成します。
 		/// @param src 画像

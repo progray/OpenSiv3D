@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -110,6 +110,8 @@ namespace s3d
 			}
 		}
 
+		const bool windowFocused = SIV3D_ENGINE(Window)->getState().focused;
+
 		{
 			m_allInputs.clear();
 
@@ -120,12 +122,12 @@ namespace s3d
 
 				for (size_t i = 0; i < _countof(buf); ++i)
 				{
-					const bool pressed = ((buf[i] >> 7) & 0x1);
+					const bool pressed = (windowFocused && ((buf[i] >> 7) & 0x1));
 
 					auto& state = m_states[i];
 					state.update(pressed);
 
-					if ((state.pressed || state.up)
+					if ((state.pressed() || state.up())
 						&& InRange<size_t>(i, VK_BACK, 0xEF))
 					{
 						m_allInputs.emplace_back(InputDeviceType::Keyboard, static_cast<uint8>(i));
@@ -134,9 +136,9 @@ namespace s3d
 			}
 		}
 
-		if (SIV3D_ENGINE(Window)->getState().focused)
+		if (windowFocused)
 		{
-			if (m_states[VK_ESCAPE].down)
+			if (m_states[VK_ESCAPE].down())
 			{
 				SIV3D_ENGINE(UserAction)->reportUserActions(UserAction::AnyKeyDown | UserAction::EscapeKeyDown);
 			}
@@ -154,7 +156,7 @@ namespace s3d
 
 			for (uint32 vk = VK_LBUTTON; vk <= VK_XBUTTON2; ++vk)
 			{
-				if (m_states[vk].down)
+				if (m_states[vk].down())
 				{
 					SIV3D_ENGINE(UserAction)->reportUserActions(UserAction::MouseButtonDown);
 					break;
@@ -166,19 +168,31 @@ namespace s3d
 	bool CKeyboard::down(const uint32 index) const
 	{
 		assert(index < InputState::KeyCount);
-		return m_states[index].down;
+		return m_states[index].down();
 	}
 
 	bool CKeyboard::pressed(const uint32 index) const
 	{
 		assert(index < InputState::KeyCount);
-		return m_states[index].pressed;
+		return m_states[index].pressed();
 	}
 
 	bool CKeyboard::up(const uint32 index) const
 	{
 		assert(index < InputState::KeyCount);
-		return m_states[index].up;
+		return m_states[index].up();
+	}
+
+	void CKeyboard::clearInput(const uint32 index)
+	{
+		assert(index < InputState::KeyCount);
+		m_states[index].clearInput();
+	}
+
+	bool CKeyboard::cleared(const uint32 index) const
+	{
+		assert(index < InputState::KeyCount);
+		return m_states[index].cleared();
 	}
 
 	Duration CKeyboard::pressedDuration(const uint32 index) const
@@ -200,6 +214,8 @@ namespace s3d
 
 	Array<KeyEvent> CKeyboard::getEvents() const noexcept
 	{
+		std::lock_guard lock{ m_eventMutex };
+
 		return m_events;
 	}
 

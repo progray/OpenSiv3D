@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -139,6 +139,15 @@ namespace s3d
 		/// @return 適用されているカメラ座標変換
 		[[nodiscard]]
 		const Mat3x2& GetCameraTransform() noexcept;
+
+		/// @brief マウスカーソルのキャプチャ状態を設定します。
+		/// @param captured キャプチャ状態にする場合 true, 解除する場合は false
+		void SetCapture(bool captured) noexcept;
+
+		/// @brief マウスカーソルのキャプチャ状態を返します。
+		/// @return マウスカーソルがキャプチャされている場合 true, それ以外の場合は false
+		[[nodiscard]]
+		bool IsCaptured() noexcept;
 	}
 }
 

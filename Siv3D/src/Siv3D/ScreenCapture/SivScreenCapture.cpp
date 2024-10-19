@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -24,19 +24,19 @@ namespace s3d
 			return SIV3D_ENGINE(ScreenCapture)->getScreenshotDirectory();
 		}
 
-		void SetScreenshotDirectory(FilePath&& path)
+		void SetScreenshotDirectory(const FilePathView path)
 		{
-			SIV3D_ENGINE(ScreenCapture)->setScreenshotDirectory(std::move(path));
+			SIV3D_ENGINE(ScreenCapture)->setScreenshotDirectory(path);
 		}
 
-		void SaveCurrentFrame(FilePath&& path)
+		void SaveCurrentFrame(const FilePathView path)
 		{
-			SIV3D_ENGINE(ScreenCapture)->requestScreenCapture(std::move(path));
+			SIV3D_ENGINE(ScreenCapture)->requestScreenCapture(path);
 		}
 
 		void RequestCurrentFrame()
 		{
-			SIV3D_ENGINE(ScreenCapture)->requestScreenCapture(FilePath());
+			SIV3D_ENGINE(ScreenCapture)->requestScreenCapture({});
 		}
 
 		bool HasNewFrame()

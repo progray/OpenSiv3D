@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -12,6 +12,7 @@
 # include <Siv3D/VideoReader.hpp>
 # include <Siv3D/EngineLog.hpp>
 # include <Siv3D/VideoReader/VideoReaderDetail.hpp>
+# include <Siv3D/Browser.hpp>
 
 namespace s3d
 {
@@ -29,6 +30,9 @@ namespace s3d
 
 	bool VideoReader::open(const FilePathView path)
 	{
+	# if SIV3D_PLATFORM(WEB)
+		Platform::Web::FetchFile(path);
+	# endif
 		return pImpl->open(path);
 	}
 

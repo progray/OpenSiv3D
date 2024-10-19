@@ -2,18 +2,18 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
 //-----------------------------------------------
 
-# include <Siv3D/DLL.hpp>
 # include <Siv3D/Window.hpp>
 # include <Siv3D/WindowState.hpp>
 # include <Siv3D/EngineLog.hpp>
 # include "D3D11SwapChain.hpp"
+# include <Siv3D/DLL.hpp>
 # include <dwmapi.h>
 # include <VersionHelpers.h>
 
@@ -44,12 +44,30 @@ namespace s3d
 			::DwmGetCompositionTimingInfo(nullptr, &timingInfo);
 			return ToMillisec(timingInfo.qpcRefreshPeriod);
 		}
+
+		[[nodiscard]]
+		static bool CheckTearingSupport(const D3D11Device& device)
+		{
+			IDXGIFactory5* const factory = device.getDXGIFactory5();
+			if (factory == nullptr)
+			{
+				return false;
+			}
+
+			BOOL allowTearing = FALSE;
+			const HRESULT hr = factory->CheckFeatureSupport(
+				DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+				&allowTearing,
+				sizeof(allowTearing));
+			return SUCCEEDED(hr) && allowTearing == TRUE;
+		}
 	}
 
 	D3D11SwapChain::D3D11SwapChain(const D3D11Device& device, HWND hWnd, const Size& frameBufferSize)
 		: m_hWnd(hWnd)
 		, m_device(device.getDevice())
 		, m_context(device.getContext())
+		, m_tearingSupport(detail::CheckTearingSupport(device))
 	{
 		LOG_SCOPED_TRACE(U"D3D11SwapChain::D3D11SwapChain()");
 
@@ -63,7 +81,7 @@ namespace s3d
 		m_desc.Scaling		= DXGI_SCALING_STRETCH;
 		m_desc.SwapEffect	= (device.getDXGIFactory5() ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD);
 		m_desc.AlphaMode	= DXGI_ALPHA_MODE_IGNORE;
-		m_desc.Flags		= 0;
+		m_desc.Flags		= m_tearingSupport ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
 		// Swap chain を作成
 		{
@@ -95,7 +113,7 @@ namespace s3d
 			LOG_TRACE(U"IDXGIDevice2::SetMaximumFrameLatency()");
 
 			if (ComPtr<IDXGIDevice2> pDXGIDevice;
-				SUCCEEDED(device.getDeiviceComPtr().As(&pDXGIDevice)))
+				SUCCEEDED(device.getDeviceComPtr().As(&pDXGIDevice)))
 			{
 				pDXGIDevice->SetMaximumFrameLatency(2);
 			}
@@ -258,7 +276,8 @@ namespace s3d
 		}
 		*/
 
-		const HRESULT hr = m_swapChain1->Present(0, 0);
+		const UINT presentFlags = m_tearingSupport ? DXGI_PRESENT_ALLOW_TEARING : 0;
+		const HRESULT hr = m_swapChain1->Present(0, presentFlags);
 
 		if (hr == DXGI_STATUS_OCCLUDED)
 		{

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -319,6 +319,19 @@ namespace s3d
 		}
 
 		[[nodiscard]]
+		bool contains(const value_type& value) const
+		{
+			return (std::find(begin(), end(), value) != end());
+		}
+
+		template <class Fty, std::enable_if_t<std::is_invocable_r_v<bool, Fty, bool>>* = nullptr>
+		[[nodiscard]]
+		bool contains_if(Fty f) const
+		{
+			return any(f);
+		}
+
+		[[nodiscard]]
 		size_t count(const value_type& value) const
 		{
 			return std::count(begin(), end(), value);
@@ -379,12 +392,13 @@ namespace s3d
 			return *this;
 		}
 
+		template <class U>
 		[[nodiscard]]
-		const value_type& fetch(size_t index, const value_type& defaultValue) const
+		value_type fetch(size_t index, U&& defaultValue) const
 		{
 			if (index >= size())
 			{
-				return defaultValue;
+				return std::forward<U>(defaultValue);
 			}
 
 			return operator[](index);
@@ -443,15 +457,7 @@ namespace s3d
 		[[nodiscard]]
 		bool includes(const value_type& value) const
 		{
-			for (const auto& v : *this)
-			{
-				if (v == value)
-				{
-					return true;
-				}
-			}
-
-			return false;
+			return (std::find(begin(), end(), value) != end());
 		}
 
 		template <class Fty, std::enable_if_t<std::is_invocable_r_v<bool, Fty, bool>>* = nullptr>
@@ -602,7 +608,7 @@ namespace s3d
 		}
 
 		[[nodiscard]]
-		Array removed_at(const size_t index) const
+		Array removed_at(const size_t index) const&
 		{
 			if (index >= size())
 			{
@@ -616,6 +622,12 @@ namespace s3d
 			new_array.insert(new_array.end(), begin() + index + 1, end());
 
 			return new_array;
+		}
+
+		[[nodiscard]]
+		Array removed_at(const size_t index) &&
+		{
+			return std::move(remove_at(index));
 		}
 
 		template <class Fty, std::enable_if_t<std::is_invocable_r_v<bool, Fty, bool>>* = nullptr>
@@ -815,7 +827,9 @@ namespace s3d
 		[[nodiscard]]
 		Array rotated(std::ptrdiff_t count = 1) const&
 		{
-			return Array(*this).rotate(count);
+			Array result{ *this };
+			result.rotate(count);
+			return result;
 		}
 
 		[[nodiscard]]
@@ -836,7 +850,9 @@ namespace s3d
 		[[nodiscard]]
 		Array rsorted() const&
 		{
-			return Array(*this).rsort();
+			Array result{ *this };
+			result.rsort();
+			return result;
 		}
 
 		[[nodiscard]]
@@ -869,14 +885,16 @@ namespace s3d
 		[[nodiscard]]
 		Array shuffled()&&
 		{
-			return shuffled(GetDefaultRNG());
+			return std::move(*this).shuffled(GetDefaultRNG());
 		}
 
 		SIV3D_CONCEPT_URBG
 		[[nodiscard]]
 		Array shuffled(URBG&& rbg) const&
 		{
-			return Array(*this).shuffle(std::forward<URBG>(rbg));
+			Array result{ *this };
+			result.shuffle(std::forward<URBG>(rbg));
+			return result;
 		}
 
 		SIV3D_CONCEPT_URBG
@@ -949,13 +967,17 @@ namespace s3d
 		[[nodiscard]]
 		Array sorted() const&
 		{
-			return Array(*this).sort();
+			Array result{ *this };
+			result.sort();
+			return result;
 		}
 
 		[[nodiscard]]
 		Array stable_sorted() const&
 		{
-			return Array(*this).stable_sort();
+			Array result{ *this };
+			result.stable_sort();
+			return result;
 		}
 
 		[[nodiscard]]
@@ -978,14 +1000,18 @@ namespace s3d
 		[[nodiscard]]
 		Array sorted_by(Fty f) const&
 		{
-			return Array(*this).sort_by(f);
+			Array result{ *this };
+			result.sort_by(f);
+			return result;
 		}
 
 		template <class Fty, std::enable_if_t<std::is_invocable_r_v<bool, Fty, bool, bool>>* = nullptr>
 		[[nodiscard]]
 		Array stable_sorted_by(Fty f) const&
 		{
-			return Array(*this).stable_sort_by(f);
+			Array result{ *this };
+			result.stable_sort_by(f);
+			return result;
 		}
 
 		template <class Fty, std::enable_if_t<std::is_invocable_r_v<bool, Fty, bool, bool>>* = nullptr>
@@ -1025,7 +1051,7 @@ namespace s3d
 		}
 
 		[[nodiscard]]
-		Array stable_uniqued() const
+		Array stable_uniqued() const&
 		{
 			Array result;
 
@@ -1050,6 +1076,14 @@ namespace s3d
 			return result;
 		}
 
+		[[nodiscard]]
+		Array stable_uniqued() &&
+		{
+			// stable_unique() が最適化されたら次の実装に変更する
+			// return std::move(stable_unique());
+			return stable_uniqued();
+		}
+
 		Array& sort_and_unique()
 		{
 			return *this = stable_uniqued().sort();
@@ -1064,7 +1098,7 @@ namespace s3d
 		[[nodiscard]]
 		Array sorted_and_uniqued()&&
 		{
-			return stable_uniqued().sort();
+			return std::move(stable_uniqued().sort());
 		}
 
 		Array& unique_consecutive()

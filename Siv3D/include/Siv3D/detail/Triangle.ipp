@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -181,6 +181,11 @@ namespace s3d
 		return *this;
 	}
 
+	inline constexpr bool Triangle::isClockwise() const noexcept
+	{
+		return Geometry2D::IsClockwise(p0, p1, p2);
+	}
+
 	inline constexpr Triangle::position_type& Triangle::p(const size_t index) noexcept
 	{
 		return (&p0)[index];
@@ -275,4 +280,17 @@ namespace s3d
 	{
 		return Geometry2D::Contains(*this, other);
 	}
+
+	inline constexpr Triangle Triangle::FromPoints(const position_type& p0, const position_type& p1, const position_type& p2) noexcept
+	{
+		if (Geometry2D::IsClockwise(p0, p1, p2))
+		{
+			return{ p0, p1, p2 };
+		}
+		else
+		{
+			return{ p0, p2, p1 };
+		}
+	}
+
 }

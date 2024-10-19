@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -18,14 +18,13 @@ namespace s3d
 {
 	namespace detail
 	{
-		template <class Type>
-		static RectF CalculateBoundingRect(const Vector2D<Type>* const pVertex, const size_t vertexSize)
+		static RectF CalculateBoundingRect(const Vec2* const pVertex, const size_t vertexSize)
 		{
 			assert(pVertex != nullptr);
 			assert(vertexSize != 0);
 
-			const Vector2D<Type>* it = pVertex;
-			const Vector2D<Type>* itEnd = (it + vertexSize);
+			const Vec2* it = pVertex;
+			const Vec2* itEnd = (it + vertexSize);
 
 			double left		= it->x;
 			double top		= it->y;
@@ -209,7 +208,7 @@ namespace s3d
 		m_indices = std::move(indices);
 
 		// [5 of 5]
-		m_boundingRect = detail::CalculateBoundingRect(pOuterVertex, vertexSize);
+		m_boundingRect = detail::CalculateBoundingRect(m_polygon.outer().data(), m_polygon.outer().size());
 	}
 
 	const Array<Vec2>& Polygon::PolygonDetail::outer() const noexcept
@@ -370,7 +369,7 @@ namespace s3d
 			m_holes.back().insert(m_holes.back().end(), hole.begin(), hole.end());
 		}
 
-		m_boundingRect = detail::CalculateBoundingRect(m_vertices.data(), m_vertices.size());
+		m_boundingRect = detail::CalculateBoundingRect(m_polygon.outer().data(), m_polygon.outer().size());
 	}
 
 	void Polygon::PolygonDetail::transform(const double s, const double c, const Vec2& pos)
@@ -417,7 +416,7 @@ namespace s3d
 			m_holes.back().insert(m_holes.back().end(), hole.begin(), hole.end());
 		}
 
-		m_boundingRect = detail::CalculateBoundingRect(m_vertices.data(), m_vertices.size());
+		m_boundingRect = detail::CalculateBoundingRect(m_polygon.outer().data(), m_polygon.outer().size());
 	}
 
 	void Polygon::PolygonDetail::scale(const double s)
@@ -455,8 +454,7 @@ namespace s3d
 			point *= sf;
 		}
 
-		// [Siv3D ToDo] 不要に
-		m_boundingRect = detail::CalculateBoundingRect(m_vertices.data(), m_vertices.size());
+		m_boundingRect = m_boundingRect.scaledAt(Vec2{ 0, 0 }, s);
 	}
 
 	void Polygon::PolygonDetail::scale(const Vec2 s)
@@ -494,8 +492,7 @@ namespace s3d
 			point *= sf;
 		}
 
-		// [Siv3D ToDo] 不要に
-		m_boundingRect = detail::CalculateBoundingRect(m_vertices.data(), m_vertices.size());
+		m_boundingRect = m_boundingRect.scaledAt(Vec2{ 0, 0 }, s);
 	}
 
 	void Polygon::PolygonDetail::scaleAt(const Vec2 pos, const double s)
@@ -534,8 +531,7 @@ namespace s3d
 			point = (posF + (point - posF) * sf);
 		}
 
-		// [Siv3D ToDo] 不要に
-		m_boundingRect = detail::CalculateBoundingRect(m_vertices.data(), m_vertices.size());
+		m_boundingRect = m_boundingRect.scaledAt(pos, s);
 	}
 
 	void Polygon::PolygonDetail::scaleAt(const Vec2 pos, const Vec2 s)
@@ -574,8 +570,7 @@ namespace s3d
 			point = (posF + (point - posF) * sf);
 		}
 
-		// [Siv3D ToDo] 不要に
-		m_boundingRect = detail::CalculateBoundingRect(m_vertices.data(), m_vertices.size());
+		m_boundingRect = m_boundingRect.scaledAt(pos, s);
 	}
 
 	double Polygon::PolygonDetail::area() const noexcept
@@ -657,39 +652,26 @@ namespace s3d
 
 		const auto& src = m_polygon;
 
-		polygon_t in;
+		polygon_t dst;
 		{
-			auto& in_outer = in.outer();
 			const auto& src_outer = src.outer();
-
-			for (size_t i = 0; i < src_outer.size(); ++i)
-			{
-				in_outer.push_back(src_outer[src_outer.size() - i - 1]);
-			}
-
-			if (src.outer().size() >= 2)
-			{
-				in_outer.push_back(src_outer[src_outer.size() - 1]);
-
-				in_outer.push_back(src_outer[src_outer.size() - 2]);
-			}
+			dst.outer().assign(src_outer.rbegin(), src_outer.rend());
 		}
 
 		if (const size_t num_holes = src.inners().size())
 		{
-			in.inners().resize(num_holes);
+			dst.inners().resize(num_holes);
 
 			for (size_t i = 0; i < num_holes; ++i)
 			{
-				for (size_t k = 0; k < src.inners()[i].size(); ++k)
-				{
-					in.inners()[i].push_back(src.inners()[i][src.inners()[i].size() - k - 1]);
-				}
+				auto& dstInner = dst.inners()[i];
+				const auto& srcInner = src.inners()[i];
+				dstInner.assign(srcInner.rbegin(), srcInner.rend());
 			}
 		}
 
 		boost::geometry::model::multi_polygon<CwOpenPolygon> multiPolygon;
-		boost::geometry::buffer(in, multiPolygon, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+		boost::geometry::buffer(dst, multiPolygon, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
 
 		if (multiPolygon.size() != 1)
 		{
@@ -714,7 +696,7 @@ namespace s3d
 			holes[i].assign(resultHole.rbegin(), resultHole.rend());
 		}
 
-		return Polygon{ outer, holes };
+		return Polygon::CorrectOne(outer, holes);
 	}
 
 	Polygon Polygon::PolygonDetail::calculateRoundBuffer(const double distance) const
@@ -728,39 +710,26 @@ namespace s3d
 
 		const auto& src = m_polygon;
 
-		polygon_t in;
+		polygon_t dst;
 		{
-			auto& in_outer = in.outer();
 			const auto& src_outer = src.outer();
-
-			for (size_t i = 0; i < src_outer.size(); ++i)
-			{
-				in_outer.push_back(src_outer[src_outer.size() - i - 1]);
-			}
-
-			if (src.outer().size() >= 2)
-			{
-				in_outer.push_back(src_outer[src_outer.size() - 1]);
-
-				in_outer.push_back(src_outer[src_outer.size() - 2]);
-			}
+			dst.outer().assign(src_outer.rbegin(), src_outer.rend());
 		}
 
 		if (const size_t num_holes = src.inners().size())
 		{
-			in.inners().resize(num_holes);
+			dst.inners().resize(num_holes);
 
 			for (size_t i = 0; i < num_holes; ++i)
 			{
-				for (size_t k = 0; k < src.inners()[i].size(); ++k)
-				{
-					in.inners()[i].push_back(src.inners()[i][src.inners()[i].size() - k - 1]);
-				}
+				auto& dstInner = dst.inners()[i];
+				const auto& srcInner = src.inners()[i];
+				dstInner.assign(srcInner.rbegin(), srcInner.rend());
 			}
 		}
 
 		boost::geometry::model::multi_polygon<CwOpenPolygon> multiPolygon;
-		boost::geometry::buffer(in, multiPolygon, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+		boost::geometry::buffer(dst, multiPolygon, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
 
 		if (multiPolygon.size() != 1)
 		{
@@ -785,7 +754,7 @@ namespace s3d
 			holes[i].assign(resultHole.rbegin(), resultHole.rend());
 		}
 
-		return Polygon{ outer, holes };
+		return Polygon::CorrectOne(outer, holes);
 	}
 
 	Polygon Polygon::PolygonDetail::simplified(const double maxDistance) const
@@ -1241,7 +1210,7 @@ namespace s3d
 	{
 		Polygon CalculateBuffer(const LineString& points, const double distance, CloseRing closeRing, int32 bufferQuality)
 		{
-			if (points.size() < 2)
+			if (points.isEmpty())
 			{
 				return{};
 			}
@@ -1321,7 +1290,7 @@ namespace s3d
 
 		Polygon CalculateRoundBuffer(const LineString& points, const double distance, CloseRing closeRing, int32 bufferQuality)
 		{
-			if (points.size() < 2)
+			if (points.isEmpty())
 			{
 				return{};
 			}

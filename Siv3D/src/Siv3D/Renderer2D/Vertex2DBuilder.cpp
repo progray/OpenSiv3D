@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -449,6 +449,46 @@ namespace s3d
 			return indexSize;
 		}
 
+		Vertex2D::IndexType BuildRectFrameTB(const BufferCreatorFunc& bufferCreator, const FloatRect& rect, float thickness, const Float4& topColor, const Float4& bottomColor)
+		{
+			constexpr Vertex2D::IndexType vertexSize = 8, indexSize = 24;
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexSize, indexSize);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			pVertex[0].pos.set((rect.left - thickness), (rect.top - thickness));
+			pVertex[1].pos.set(rect.left, rect.top);
+			pVertex[2].pos.set((rect.left - thickness), (rect.bottom + thickness));
+			pVertex[3].pos.set(rect.left, rect.bottom);
+			pVertex[4].pos.set((rect.right + thickness), (rect.top - thickness));
+			pVertex[5].pos.set(rect.right, rect.top);
+			pVertex[6].pos.set((rect.right + thickness), (rect.bottom + thickness));
+			pVertex[7].pos.set(rect.right, rect.bottom);
+
+			{
+				const Float4 tc = topColor;
+				const Float4 bc = bottomColor;
+				const float y = rect.top;
+				const float invH = (1.0f / (rect.bottom - rect.top));
+
+				for (size_t i = 0; i < vertexSize; ++i)
+				{
+					const float t = ((pVertex->pos.y - y) * invH);
+					(pVertex++)->color = tc.lerp(bc, t);
+				}
+			}
+
+			for (Vertex2D::IndexType i = 0; i < indexSize; ++i)
+			{
+				*pIndex++ = (indexOffset + detail::RectFrameIndexTable[i]);
+			}
+
+			return indexSize;
+		}
+
 		Vertex2D::IndexType BuildCircle(const BufferCreatorFunc& bufferCreator, const Float2& center, float r, const Float4& innerColor, const Float4& outerColor, const float scale)
 		{
 			const float absR = Abs(r);
@@ -599,16 +639,15 @@ namespace s3d
 
 			// 周
 			{
-				const float radDelta = Math::TwoPiF / (quality - 1);
-				const float start = -(startAngle + angle) + Math::HalfPiF;
-				const float angleScale = (angle / Math::TwoPiF);
+				const float start = (startAngle + ((angle < 0.0f) ? angle : 0.0f));
+				const float radDelta = (Abs(angle) / (quality - 1));
 				Vertex2D* pDst = &pVertex[1];
 
 				for (Vertex2D::IndexType i = 0; i < quality; ++i)
 				{
-					const float rad = start + (radDelta * i) * angleScale;
+					const float rad = (start + (radDelta * i));
 					const auto [s, c] = FastMath::SinCos(rad);
-					(pDst++)->pos.set(centerX + r * c, centerY - r * s);
+					(pDst++)->pos.set(centerX + r * s, centerY - r * c);
 				}
 			}
 
@@ -623,8 +662,65 @@ namespace s3d
 
 			for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
 			{
-				*pIndex++ = (indexOffset + i + 1);
 				*pIndex++ = indexOffset;
+				*pIndex++ = (indexOffset + i + 1);
+				*pIndex++ = (indexOffset + i + 2);
+			}
+
+			return indexSize;
+		}
+
+		Vertex2D::IndexType BuildCircleArcRoundCap(const BufferCreatorFunc& bufferCreator, const Float2& center, float r, float startAngle, const Float4& startColor, const Float4& endColor, float scale)
+		{
+			const Vertex2D::IndexType quality = detail::CalculateCirclePieQuality(r * scale, Math::PiF);
+			const Vertex2D::IndexType vertexSize = quality, indexSize = ((quality - 2) * 3);
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexSize, indexSize);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			const float centerX = center.x;
+			const float centerY = center.y;
+			const float radDelta = (Math::PiF / (quality - 1));
+
+			// 周
+			{
+				Vertex2D* pDst = pVertex;
+
+				for (Vertex2D::IndexType i = 0; i < quality; ++i)
+				{
+					const float rad = (startAngle + (radDelta * i));
+					const auto [s, c] = FastMath::SinCos(rad);
+					(pDst++)->pos.set(centerX + r * s, centerY - r * c);
+				}
+			}
+
+			{
+				const size_t midIndex = (vertexSize >> 1);
+
+				pVertex[0].color = startColor;
+				pVertex[vertexSize - 1].color = endColor;
+
+				for (size_t i = 1; i < midIndex; ++i)
+				{
+					const float rad = (radDelta * i);
+					const auto f = (std::cos(rad) * 0.5f + 0.5f);
+					pVertex[i].color = endColor.lerp(startColor, f);
+					pVertex[vertexSize - i - 1].color = startColor.lerp(endColor, f);
+				}
+
+				if (vertexSize & 1)
+				{
+					pVertex[midIndex].color = endColor.lerp(startColor, 0.5f);
+				}
+			}
+
+			for (Vertex2D::IndexType i = 0; i < (quality - 2); ++i)
+			{
+				*pIndex++ = indexOffset;
+				*pIndex++ = (indexOffset + i + 1);
 				*pIndex++ = (indexOffset + i + 2);
 			}
 
@@ -641,8 +737,8 @@ namespace s3d
 				const Float2 startPos	= OffsetCircularF(center, (rInner + halfThickness), startAngle).fastToFloat2();
 				const Float2 endPos		= OffsetCircularF(center, (rInner + halfThickness), startAngle + _angle).fastToFloat2();
 
-				indexCount += BuildCirclePie(bufferCreator, startPos, halfThickness, (startAngle + Math::PiF), Math::PiF, outerColor, outerColor, scale);
-				indexCount += BuildCirclePie(bufferCreator, endPos, halfThickness, (startAngle + _angle), Math::PiF, outerColor, outerColor, scale);
+				indexCount += BuildCircleArcRoundCap(bufferCreator, startPos, halfThickness, (startAngle + Math::PiF), innerColor, outerColor, scale);
+				indexCount += BuildCircleArcRoundCap(bufferCreator, endPos, halfThickness, (startAngle + _angle), outerColor, innerColor, scale);
 
 				return indexCount;
 			}
@@ -673,24 +769,23 @@ namespace s3d
 			{
 				const float centerX = center.x;
 				const float centerY = center.y;
-				const float radDelta = Math::TwoPiF / (quality - 1);
-				const float start = -(startAngle + angle) + Math::HalfPiF;
-				const float angleScale = (angle / Math::TwoPiF);
+				const float start = (startAngle + ((angle < 0.0f) ? angle : 0.0f));
+				const float radDelta = (Abs(angle) / (quality - 1));
 				Vertex2D* pDst = pVertex;
 
 				for (Vertex2D::IndexType i = 0; i < quality; ++i)
 				{
-					const float rad = start + (radDelta * i) * angleScale;
+					const float rad = (start + (radDelta * i));
 					const auto [s, c] = FastMath::SinCos(rad);
-					(pDst++)->pos.set(centerX + rOuter * c, centerY - rOuter * s);
-					(pDst++)->pos.set(centerX + rInner * c, centerY - rInner * s);
+					(pDst++)->pos.set(centerX + rInner * s, centerY - rInner * c);
+					(pDst++)->pos.set(centerX + rOuter * s, centerY - rOuter * c);
 				}
 			}
 
 			for (size_t i = 0; i < vertexSize / 2; ++i)
 			{
-				(pVertex++)->color = outerColor;
 				(pVertex++)->color = innerColor;
+				(pVertex++)->color = outerColor;
 			}
 
 			for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
@@ -699,6 +794,70 @@ namespace s3d
 				{
 					*pIndex++ = indexOffset + (i * 2 + detail::RectIndexTable[k]);
 				}
+			}
+
+			return indexSize;
+		}
+
+		Vertex2D::IndexType BuildCircleSegment(const BufferCreatorFunc& bufferCreator, const Float2& center, const float r, const float startAngle, const float _angle, const Float4& color, const float scale)
+		{
+			if (_angle == 0.0f)
+			{
+				return 0;
+			}
+
+			const float angle = Clamp(_angle, -Math::TwoPiF, Math::TwoPiF);
+			const Vertex2D::IndexType quality = detail::CalculateCirclePieQuality(r * scale, angle);
+			const Vertex2D::IndexType vertexSize = (quality + 1), indexSize = ((quality - 1) * 3);
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexSize, indexSize);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			const float centerX = center.x;
+			const float centerY = center.y;
+
+			{
+				const auto [s1, c1] = FastMath::SinCos(startAngle);
+				const Float2 p1{ s1, -c1 };
+
+				const auto [s2, c2] = FastMath::SinCos(startAngle + angle);
+				const Float2 p2{ s2, -c2 };
+
+				const Float2 mid = ((p1 + p2) * 0.5f * r);
+
+				// 中心
+				pVertex[0].pos = (mid + Float2{ centerX, centerY });
+			}
+
+			// 周
+			{
+				const float start = (startAngle + ((angle < 0.0f) ? angle : 0.0f));
+				const float radDelta = (Abs(angle) / (quality - 1));
+				Vertex2D* pDst = &pVertex[1];
+
+				for (Vertex2D::IndexType i = 0; i < quality; ++i)
+				{
+					const float rad = (start + (radDelta * i));
+					const auto [s, c] = FastMath::SinCos(rad);
+					(pDst++)->pos.set(centerX + r * s, centerY - r * c);
+				}
+			}
+
+			{
+				for (size_t i = 0; i < vertexSize; ++i)
+				{
+					(pVertex++)->color = color;
+				}
+			}
+
+			for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
+			{
+				*pIndex++ = indexOffset;
+				*pIndex++ = (indexOffset + i + 1);
+				*pIndex++ = (indexOffset + i + 2);
 			}
 
 			return indexSize;
@@ -956,6 +1115,93 @@ namespace s3d
 			return indexSize;
 		}
 
+		Vertex2D::IndexType BuildRoundRect(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const FloatRect& rect, float w, float h, float r, const Float4& topColor, const Float4& bottomColor, float scale)
+		{
+			const float rr = Min({ w * 0.5f, h * 0.5f, Max(0.0f, r) });
+			const Vertex2D::IndexType quality = detail::CaluculateFanQuality(rr * scale);
+
+			buffer.resize(quality);
+			{
+				const float radDelta = (Math::HalfPiF / (quality - 1));
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					const float rad = (radDelta * i);
+					const auto [s, c] = FastMath::SinCos(rad);
+					buffer[i].set(s * rr, -c * rr);
+				}
+			}
+
+			const bool uniteV = (h * 0.5f == rr);
+			const bool uniteH = (w * 0.5f == rr);
+			const std::array<Float2, 4> centers =
+			{ {
+				{ rect.right - rr, rect.top + rr },
+				{ rect.right - rr, rect.bottom - rr },
+				{ rect.left + rr, rect.bottom - rr },
+				{ rect.left + rr, rect.top + rr },
+			} };
+
+			const Vertex2D::IndexType vertexSize = (quality - uniteV + quality - uniteH) * 2;
+			const Vertex2D::IndexType indexSize = (vertexSize - 2) * 3;
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexSize, indexSize);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			{
+				Vertex2D* pDst = pVertex;
+
+				for (int32 i = 0; i < quality - uniteV; ++i)
+				{
+					pDst->pos = centers[0] + buffer[i];
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality - uniteH; ++i)
+				{
+					pDst->pos = centers[1] + Float2{ buffer[quality - i - 1].x, -buffer[quality - i - 1].y };
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality - uniteV; ++i)
+				{
+					pDst->pos = centers[2] - buffer[i];
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality - uniteH; ++i)
+				{
+					pDst->pos = centers[3] + Float2{ -buffer[quality - i - 1].x, buffer[quality - i - 1].y };
+					++pDst;
+				}
+
+				{
+					const Float4 tc = topColor;
+					const Float4 bc = bottomColor;
+					const float y = rect.top;
+					const float invH = (1.0f / h);
+
+					for (size_t i = 0; i < vertexSize; ++i)
+					{
+						const float t = ((pVertex->pos.y - y) * invH);
+						(pVertex++)->color = tc.lerp(bc, t);
+					}
+				}
+			}
+
+			for (Vertex2D::IndexType i = 0; i < (vertexSize - 2); ++i)
+			{
+				*pIndex++ = indexOffset;
+				*pIndex++ = (indexOffset + i + 1);
+				*pIndex++ = (indexOffset + ((i + 2 < vertexSize) ? (i + 2) : 0));
+			}
+
+			return indexSize;
+		}
+
 		Vertex2D::IndexType BuildRoundRectFrame(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const RoundRect& outer, const RoundRect& inner, const Float4& color, float scale)
 		{
 			const float orr = static_cast<float>(outer.r);
@@ -1072,6 +1318,151 @@ namespace s3d
 			for (size_t i = 0; i < vertexSize; ++i)
 			{
 				(pVertex++)->color = color;
+			}
+
+			for (Vertex2D::IndexType i = 0; i < outerVertexSize; ++i)
+			{
+				const Vertex2D::IndexType i0 = (indexOffset + i);
+				const Vertex2D::IndexType i1 = (indexOffset + (((i + 1) < outerVertexSize) ? (i + 1) : 0));
+				const Vertex2D::IndexType i2 = (indexOffset + outerVertexSize + i);
+				const Vertex2D::IndexType i3 = (indexOffset + outerVertexSize + (((i + 1) < outerVertexSize) ? (i + 1) : 0));
+
+				*pIndex++ = i0;
+				*pIndex++ = i1;
+				*pIndex++ = i2;
+
+				*pIndex++ = i2;
+				*pIndex++ = i1;
+				*pIndex++ = i3;
+			}
+
+			return indexSize;
+		}
+
+		Vertex2D::IndexType BuildRoundRectFrame(const BufferCreatorFunc& bufferCreator, Array<Float2>& buffer, const RoundRect& outer, const RoundRect& inner, const Float4& topColor, const Float4& bottomColor, float scale)
+		{
+			const float orr = static_cast<float>(outer.r);
+			const Vertex2D::IndexType quality = detail::CaluculateFanQuality(orr * scale);
+
+			const Vertex2D::IndexType outerVertexSize = (quality * 4);
+			const Vertex2D::IndexType vertexSize = (outerVertexSize * 2);
+			const Vertex2D::IndexType indexSize = (outerVertexSize * 6);
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexSize, indexSize);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			// 外側の頂点
+			{
+				buffer.resize(quality);
+				{
+					const float radDelta = (Math::HalfPiF / (quality - 1));
+
+					for (int32 i = 0; i < quality; ++i)
+					{
+						const float rad = (radDelta * i);
+						const auto [s, c] = FastMath::SinCos(rad);
+						buffer[i].set(s * orr, -c * orr);
+					}
+				}
+
+				const FloatRect rect{ outer.rect.x, outer.rect.y, outer.rect.rightX(), outer.rect.bottomY() };
+				const std::array<Float2, 4> centers =
+				{ {
+					{ rect.right - orr, rect.top + orr },
+					{ rect.right - orr, rect.bottom - orr },
+					{ rect.left + orr, rect.bottom - orr },
+					{ rect.left + orr, rect.top + orr },
+				} };
+
+				Vertex2D* pDst = pVertex;
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[0] + buffer[i]);
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[1] + Float2{ buffer[quality - i - 1].x, -buffer[quality - i - 1].y });
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[2] - buffer[i]);
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[3] + Float2{ -buffer[quality - i - 1].x, buffer[quality - i - 1].y });
+					++pDst;
+				}
+			}
+
+			// 内側の頂点
+			{
+				const float irr = static_cast<float>(inner.r);
+				{
+					const float s = (irr / orr);
+
+					for (int32 i = 0; i < quality; ++i)
+					{
+						buffer[i] *= s;
+					}
+				}
+
+				const FloatRect rect{ inner.rect.x, inner.rect.y, inner.rect.rightX(), inner.rect.bottomY() };
+				const std::array<Float2, 4> centers =
+				{ {
+					{ rect.right - irr, rect.top + irr },
+					{ rect.right - irr, rect.bottom - irr },
+					{ rect.left + irr, rect.bottom - irr },
+					{ rect.left + irr, rect.top + irr },
+				} };
+
+				Vertex2D* pDst = (pVertex + outerVertexSize);
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[0] + buffer[i]);
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[1] + Float2{ buffer[quality - i - 1].x, -buffer[quality - i - 1].y });
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[2] - buffer[i]);
+					++pDst;
+				}
+
+				for (int32 i = 0; i < quality; ++i)
+				{
+					pDst->pos = (centers[3] + Float2{ -buffer[quality - i - 1].x, buffer[quality - i - 1].y });
+					++pDst;
+				}
+			}
+
+			{
+				const Float4 tc = topColor;
+				const Float4 bc = bottomColor;
+				const float y = static_cast<float>(outer.rect.y);
+				const float invH = (1.0f / static_cast<float>(outer.rect.h));
+
+				for (size_t i = 0; i < vertexSize; ++i)
+				{
+					const float t = ((pVertex->pos.y - y) * invH);
+					(pVertex++)->color = tc.lerp(bc, t);
+				}
 			}
 
 			for (Vertex2D::IndexType i = 0; i < outerVertexSize; ++i)
@@ -2538,6 +2929,587 @@ namespace s3d
 			}
 
 			return indexSize;
+		}
+
+		Vertex2D::IndexType BuildRectShadow(const BufferCreatorFunc& bufferCreator, const FloatRect& rect, float blur, const Float4& color, const bool fill)
+		{
+			constexpr Vertex2D::IndexType vertexCount = 16, indexCount = 54;
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexCount, indexCount);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			// 頂点情報の書き込み
+			{
+				// ぼかしサイズの半分
+				const float halfBlur = (blur * 0.5f);
+				const float xs[4] =
+				{
+					static_cast<float>(rect.left - halfBlur),
+					static_cast<float>(rect.left + halfBlur),
+					static_cast<float>(rect.right - halfBlur),
+					static_cast<float>(rect.right + halfBlur)
+				};
+				const float ys[4] =
+				{
+					static_cast<float>(rect.top - halfBlur),
+					static_cast<float>(rect.top + halfBlur),
+					static_cast<float>(rect.bottom - halfBlur),
+					static_cast<float>(rect.bottom + halfBlur)
+				};
+				const float uvs[4] = { 0.0f, 0.5f, 0.5f, 1.0f };
+
+				for (int32 i = 0; i < 16; ++i)
+				{
+					pVertex->pos.set(xs[i % 4], ys[i / 4]);
+					pVertex->tex.set(uvs[i % 4], uvs[i / 4]);
+					pVertex->color = color;
+					++pVertex;
+				}
+			}
+
+			// インデックス情報の書き込み
+			{
+				Vertex2D::IndexType* pBase = pIndex;
+
+				for (Vertex2D::IndexType ty = 0; ty < 3; ++ty)
+				{
+					for (Vertex2D::IndexType tx = 0; tx < 3; ++tx)
+					{
+						const Vertex2D::IndexType base = (((ty * 4) + tx) + indexOffset);
+
+						*pIndex++ = base;
+						*pIndex++ = (base + 1);
+						*pIndex++ = (base + 4);
+
+						*pIndex++ = (base + 4);
+						*pIndex++ = (base + 1);
+						*pIndex++ = (base + 5);
+					}
+				}
+
+				if (not fill)
+				{
+					// 縮退三角形
+					pBase[29] = pBase[28] = pBase[27] = pBase[26] = pBase[25] = pBase[24];
+				}
+			}
+
+			return indexCount;
+		}
+
+		Vertex2D::IndexType BuildCircleShadow(const BufferCreatorFunc& bufferCreator, const Circle& circle, const float blur, const Float4& color, const float scale)
+		{
+			// ベースとなる円の半径
+			const float absR = Abs(static_cast<float>(circle.r));
+
+			// ぼかしサイズの半分
+			const float halfBlur = (blur * 0.5f);
+
+			// 影の開始半径
+			const float innerShadowR = static_cast<float>(absR - halfBlur);
+			
+			// 影の終了半径
+			const float outerShadowR = static_cast<float>(absR + halfBlur);
+			
+			// 円の品質
+			const Vertex2D::IndexType quality = detail::CalculateCircleQuality(outerShadowR * scale);
+
+			// ぼかし外円の頂点数
+			const Vertex2D::IndexType outerVertexCount = quality;
+
+			// ぼかし内円の頂点数
+			const Vertex2D::IndexType innerVertexCount = quality;
+
+			// 頂点数（ぼかし外円 + ぼかし内円 + 中心）
+			const Vertex2D::IndexType vertexCount = (outerVertexCount + innerVertexCount + 1);
+
+			// ぼかし部分のトライアングル数
+			const Vertex2D::IndexType outerTriangleCount = (quality * 2);
+
+			// 非ぼかし部分のトライアングル数
+			const Vertex2D::IndexType innerTriangleCount = quality;
+
+			// 総トライアングル数
+			const Vertex2D::IndexType triangleCount = (outerTriangleCount + innerTriangleCount);
+
+			// インデックス数
+			const Vertex2D::IndexType indexCount = (triangleCount * 3);
+
+			// バッファを確保する
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexCount, indexCount);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			// 頂点情報の書き込み（外円→内円→中心）
+			{
+				const float centerX = static_cast<float>(circle.x);
+				const float centerY = static_cast<float>(circle.y);
+				const float radDelta = (Math::TwoPiF / quality);
+				Vertex2D* pOuterVertex = &pVertex[0];
+				Vertex2D* pInnerVertex = &pVertex[outerVertexCount];
+
+				for (Vertex2D::IndexType i = 0; i < quality; ++i)
+				{
+					const float rad = (radDelta * i);
+					const auto [s, c] = FastMath::SinCos(rad);
+
+					pOuterVertex->pos.set((centerX + outerShadowR * c), (centerY - outerShadowR * s));
+					pOuterVertex->tex.set(0.0f, 0.5f);
+					pOuterVertex->color = color;
+
+					pInnerVertex->pos.set((centerX + innerShadowR * c), (centerY - innerShadowR * s));
+					pInnerVertex->tex.set(0.5f, 0.5f);
+					pInnerVertex->color = color;
+
+					++pOuterVertex;
+					++pInnerVertex;
+				}
+
+				Vertex2D* pCenterVertex = &pVertex[vertexCount - 1];
+				pCenterVertex->pos.set(centerX, centerY);
+				pCenterVertex->tex.set(0.5f, 0.5f);
+				pCenterVertex->color = color;
+			}
+
+			// インデックス情報の書き込み
+			{
+				const Vertex2D::IndexType centerIndex = ((vertexCount - 1) + indexOffset);
+
+				for (Vertex2D::IndexType i = 0; i < quality; ++i)
+				{
+					const Vertex2D::IndexType t0 = (i + indexOffset);
+					const Vertex2D::IndexType t1 = (((i + 1) % outerVertexCount) + indexOffset);
+					const Vertex2D::IndexType t2 = (t0 + outerVertexCount);
+					const Vertex2D::IndexType t3 = (t1 + outerVertexCount);
+
+					*pIndex++ = t0;
+					*pIndex++ = t1;
+					*pIndex++ = t2;
+
+					*pIndex++ = t2;
+					*pIndex++ = t1;
+					*pIndex++ = t3;
+
+					*pIndex++ = t2;
+					*pIndex++ = t3;
+					*pIndex++ = centerIndex;
+				}
+			}
+
+			return indexCount;
+		}
+
+		Vertex2D::IndexType BuildRoundRectShadow(const BufferCreatorFunc& bufferCreator, const RoundRect& roundRect, const float blur, const Float4& color, const float scale, const bool fill)
+		{
+			const float baseRadius = static_cast<float>(roundRect.r);
+			const float nearRadius = Max(baseRadius - (blur * 0.5f), 0.0f);
+			const float farRadius = (baseRadius + (blur * 0.5f));
+			const FloatRect innerRect{ (roundRect.x + baseRadius), (roundRect.y + baseRadius), (roundRect.x + roundRect.w - baseRadius), (roundRect.y + roundRect.h - baseRadius) };
+			const Vertex2D::IndexType quality = static_cast<uint16>(detail::CaluculateFanQuality(farRadius * scale));
+
+			const Vertex2D::IndexType fanVertexCount = quality;
+			const Vertex2D::IndexType roundVertexCount = (fanVertexCount + fanVertexCount + 1);
+			
+			// 頂点数
+			const Vertex2D::IndexType vertexCount = (roundVertexCount * 4);
+
+			const Vertex2D::IndexType outerFanTriangleCount = ((quality - 1) * 2);
+			const Vertex2D::IndexType innerFanTriangleCount = (quality - 1);
+			const Vertex2D::IndexType connectionTriangleCount = 18;
+			
+			// 総トライアングル数
+			const Vertex2D::IndexType triangleCount = ((outerFanTriangleCount + innerFanTriangleCount) * 4 + connectionTriangleCount);
+			
+			// インデックス数
+			const Vertex2D::IndexType indexCount = (triangleCount * 3);
+
+			// バッファを確保する
+			auto [pVertex, pIndex, indexOffset] = bufferCreator(vertexCount, indexCount);
+
+			if (not pVertex)
+			{
+				return 0;
+			}
+
+			// 頂点情報の書き込み（左上（外円→内円→中心）→右上→右下→左下）
+			{
+				const float radDelta = (Math::HalfPiF / (quality - 1));
+
+				// 左上
+				{
+					const float centerX = innerRect.left;
+					const float centerY = innerRect.top;
+					Vertex2D* pOuterVertex = &pVertex[0];
+					Vertex2D* pInnerVertex = (pOuterVertex + fanVertexCount);
+					Vertex2D* pCenterVertex = (pInnerVertex + fanVertexCount);
+
+					for (Vertex2D::IndexType i = 0; i < quality; ++i)
+					{
+						const float rad = (radDelta * i);
+						const auto [s, c] = FastMath::SinCos(rad - 180_deg);
+
+						pOuterVertex->pos.set((centerX + farRadius * c), (centerY + farRadius * s));
+						pOuterVertex->tex.set(0.0f, 0.5f);
+						pOuterVertex->color = color;
+
+						pInnerVertex->pos.set((centerX + nearRadius * c), (centerY + nearRadius * s));
+						pInnerVertex->tex.set(0.5f, 0.5f);
+						pInnerVertex->color = color;
+
+						++pOuterVertex;
+						++pInnerVertex;
+					}
+
+					pCenterVertex->pos.set(centerX, centerY);
+					pCenterVertex->tex.set(0.5f, 0.5f);
+					pCenterVertex->color = color;
+				}
+
+				// 右上
+				{
+					const float centerX = innerRect.right;
+					const float centerY = innerRect.top;
+					Vertex2D* pOuterVertex = &pVertex[roundVertexCount];
+					Vertex2D* pInnerVertex = (pOuterVertex + fanVertexCount);
+					Vertex2D* pCenterVertex = (pInnerVertex + fanVertexCount);
+
+					for (Vertex2D::IndexType i = 0; i < quality; ++i)
+					{
+						const float rad = (radDelta * i);
+						const auto [s, c] = FastMath::SinCos(rad - 90_deg);
+
+						pOuterVertex->pos.set((centerX + farRadius * c), (centerY + farRadius * s));
+						pOuterVertex->tex.set(0.0f, 0.5f);
+						pOuterVertex->color = color;
+
+						pInnerVertex->pos.set((centerX + nearRadius * c), (centerY + nearRadius * s));
+						pInnerVertex->tex.set(0.5f, 0.5f);
+						pInnerVertex->color = color;
+
+						++pOuterVertex;
+						++pInnerVertex;
+					}
+
+					pCenterVertex->pos.set(centerX, centerY);
+					pCenterVertex->tex.set(0.5f, 0.5f);
+					pCenterVertex->color = color;
+				}
+
+				// 右下
+				{
+					const float centerX = innerRect.right;
+					const float centerY = innerRect.bottom;
+					Vertex2D* pOuterVertex = &pVertex[roundVertexCount * 2];
+					Vertex2D* pInnerVertex = (pOuterVertex + fanVertexCount);
+					Vertex2D* pCenterVertex = (pInnerVertex + fanVertexCount);
+
+					for (Vertex2D::IndexType i = 0; i < quality; ++i)
+					{
+						const float rad = (radDelta * i);
+						const auto [s, c] = FastMath::SinCos(rad);
+
+						pOuterVertex->pos.set((centerX + farRadius * c), (centerY + farRadius * s));
+						pOuterVertex->tex.set(0.0f, 0.5f);
+						pOuterVertex->color = color;
+
+						pInnerVertex->pos.set((centerX + nearRadius * c), (centerY + nearRadius * s));
+						pInnerVertex->tex.set(0.5f, 0.5f);
+						pInnerVertex->color = color;
+
+						++pOuterVertex;
+						++pInnerVertex;
+					}
+
+					pCenterVertex->pos.set(centerX, centerY);
+					pCenterVertex->tex.set(0.5f, 0.5f);
+					pCenterVertex->color = color;
+				}
+
+				// 左下
+				{
+					const float centerX = innerRect.left;
+					const float centerY = innerRect.bottom;
+					Vertex2D* pOuterVertex = &pVertex[roundVertexCount * 3];
+					Vertex2D* pInnerVertex = (pOuterVertex + fanVertexCount);
+					Vertex2D* pCenterVertex = (pInnerVertex + fanVertexCount);
+
+					for (Vertex2D::IndexType i = 0; i < quality; ++i)
+					{
+						const float rad = (radDelta * i);
+						const auto [s, c] = FastMath::SinCos(rad + 90_deg);
+
+						pOuterVertex->pos.set((centerX + farRadius * c), (centerY + farRadius * s));
+						pOuterVertex->tex.set(0.0f, 0.5f);
+						pOuterVertex->color = color;
+
+						pInnerVertex->pos.set((centerX + nearRadius * c), (centerY + nearRadius * s));
+						pInnerVertex->tex.set(0.5f, 0.5f);
+						pInnerVertex->color = color;
+
+						++pOuterVertex;
+						++pInnerVertex;
+					}
+
+					pCenterVertex->pos.set(centerX, centerY);
+					pCenterVertex->tex.set(0.5f, 0.5f);
+					pCenterVertex->color = color;
+				}
+			}
+
+			// インデックス情報の書き込み（左上→右上→右下→左下→中心）
+			{
+				for (Vertex2D::IndexType i = 0; i < indexCount; ++i)
+				{
+					pIndex[i] = 0;
+				}
+
+				// 左上
+				{
+					const Vertex2D::IndexType tCenter = ((roundVertexCount - 1) + indexOffset);
+
+					for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
+					{
+						const Vertex2D::IndexType t0 = (i + indexOffset);
+						const Vertex2D::IndexType t1 = (t0 + 1);
+						const Vertex2D::IndexType t2 = (t0 + fanVertexCount);
+						const Vertex2D::IndexType t3 = (t2 + 1);
+
+						*pIndex++ = t0;
+						*pIndex++ = t1;
+						*pIndex++ = t2;
+
+						*pIndex++ = t2;
+						*pIndex++ = t1;
+						*pIndex++ = t3;
+
+						*pIndex++ = t2;
+						*pIndex++ = t3;
+						*pIndex++ = tCenter;
+					}
+				}
+
+				// 左上→右上接続
+				{
+					const Vertex2D::IndexType t0 = (indexOffset + (fanVertexCount - 1));
+					const Vertex2D::IndexType t1 = (t0 + fanVertexCount);
+					const Vertex2D::IndexType t2 = (t1 + 1);
+
+					const Vertex2D::IndexType t3 = (indexOffset + roundVertexCount);
+					const Vertex2D::IndexType t4 = (t3 + fanVertexCount);
+					const Vertex2D::IndexType t5 = (t4 + fanVertexCount);
+
+					*pIndex++ = t0;
+					*pIndex++ = t3;
+					*pIndex++ = t1;
+
+					*pIndex++ = t1;
+					*pIndex++ = t3;
+					*pIndex++ = t4;
+
+					*pIndex++ = t1;
+					*pIndex++ = t4;
+					*pIndex++ = t2;
+
+					*pIndex++ = t2;
+					*pIndex++ = t4;
+					*pIndex++ = t5;
+				}
+
+				// 右上
+				{
+					const Vertex2D::IndexType tCenter = ((2 * roundVertexCount - 1) + indexOffset);
+
+					for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
+					{
+						const Vertex2D::IndexType t0 = (i + roundVertexCount + indexOffset);
+						const Vertex2D::IndexType t1 = (t0 + 1);
+						const Vertex2D::IndexType t2 = (t0 + fanVertexCount);
+						const Vertex2D::IndexType t3 = (t2 + 1);
+
+						*pIndex++ = t0;
+						*pIndex++ = t1;
+						*pIndex++ = t2;
+
+						*pIndex++ = t2;
+						*pIndex++ = t1;
+						*pIndex++ = t3;
+
+						*pIndex++ = t2;
+						*pIndex++ = t3;
+						*pIndex++ = tCenter;
+					}
+				}
+
+				// 右上→右下接続
+				{
+					const Vertex2D::IndexType t0 = (indexOffset + roundVertexCount + (fanVertexCount - 1));
+					const Vertex2D::IndexType t1 = (t0 + fanVertexCount);
+					const Vertex2D::IndexType t2 = (t1 + 1);
+
+					const Vertex2D::IndexType t3 = (indexOffset + roundVertexCount * 2);
+					const Vertex2D::IndexType t4 = (t3 + fanVertexCount);
+					const Vertex2D::IndexType t5 = (t4 + fanVertexCount);
+
+					*pIndex++ = t0;
+					*pIndex++ = t3;
+					*pIndex++ = t1;
+
+					*pIndex++ = t1;
+					*pIndex++ = t3;
+					*pIndex++ = t4;
+
+					*pIndex++ = t1;
+					*pIndex++ = t4;
+					*pIndex++ = t2;
+
+					*pIndex++ = t2;
+					*pIndex++ = t4;
+					*pIndex++ = t5;
+				}
+
+				// 右下
+				{
+					const Vertex2D::IndexType tCenter = ((3 * roundVertexCount - 1) + indexOffset);
+
+					for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
+					{
+						const Vertex2D::IndexType t0 = (i + roundVertexCount * 2 + indexOffset);
+						const Vertex2D::IndexType t1 = (t0 + 1);
+						const Vertex2D::IndexType t2 = (t0 + fanVertexCount);
+						const Vertex2D::IndexType t3 = (t2 + 1);
+
+						*pIndex++ = t0;
+						*pIndex++ = t1;
+						*pIndex++ = t2;
+
+						*pIndex++ = t2;
+						*pIndex++ = t1;
+						*pIndex++ = t3;
+
+						*pIndex++ = t2;
+						*pIndex++ = t3;
+						*pIndex++ = tCenter;
+					}
+				}
+
+				// 右下→左下接続
+				{
+					const Vertex2D::IndexType t0 = (indexOffset + roundVertexCount * 2 + (fanVertexCount - 1));
+					const Vertex2D::IndexType t1 = (t0 + fanVertexCount);
+					const Vertex2D::IndexType t2 = (t1 + 1);
+
+					const Vertex2D::IndexType t3 = (indexOffset + roundVertexCount * 3);
+					const Vertex2D::IndexType t4 = (t3 + fanVertexCount);
+					const Vertex2D::IndexType t5 = (t4 + fanVertexCount);
+
+					*pIndex++ = t0;
+					*pIndex++ = t3;
+					*pIndex++ = t1;
+
+					*pIndex++ = t1;
+					*pIndex++ = t3;
+					*pIndex++ = t4;
+
+					*pIndex++ = t1;
+					*pIndex++ = t4;
+					*pIndex++ = t2;
+
+					*pIndex++ = t2;
+					*pIndex++ = t4;
+					*pIndex++ = t5;
+				}
+
+				// 左下
+				{
+					const Vertex2D::IndexType tCenter = ((4 * roundVertexCount - 1) + indexOffset);
+
+					for (Vertex2D::IndexType i = 0; i < (quality - 1); ++i)
+					{
+						const Vertex2D::IndexType t0 = (i + roundVertexCount * 3 + indexOffset);
+						const Vertex2D::IndexType t1 = (t0 + 1);
+						const Vertex2D::IndexType t2 = (t0 + fanVertexCount);
+						const Vertex2D::IndexType t3 = (t2 + 1);
+
+						*pIndex++ = t0;
+						*pIndex++ = t1;
+						*pIndex++ = t2;
+
+						*pIndex++ = t2;
+						*pIndex++ = t1;
+						*pIndex++ = t3;
+
+						*pIndex++ = t2;
+						*pIndex++ = t3;
+						*pIndex++ = tCenter;
+					}
+				}
+
+				// 左下→左上接続
+				{
+					const Vertex2D::IndexType t0 = (indexOffset + roundVertexCount * 3 + (fanVertexCount - 1));
+					const Vertex2D::IndexType t1 = (t0 + fanVertexCount);
+					const Vertex2D::IndexType t2 = (t1 + 1);
+
+					const Vertex2D::IndexType t3 = (indexOffset);
+					const Vertex2D::IndexType t4 = (t3 + fanVertexCount);
+					const Vertex2D::IndexType t5 = (t4 + fanVertexCount);
+
+					*pIndex++ = t0;
+					*pIndex++ = t3;
+					*pIndex++ = t1;
+
+					*pIndex++ = t1;
+					*pIndex++ = t3;
+					*pIndex++ = t4;
+
+					*pIndex++ = t1;
+					*pIndex++ = t4;
+					*pIndex++ = t2;
+
+					*pIndex++ = t2;
+					*pIndex++ = t4;
+					*pIndex++ = t5;
+				}
+
+				// 中心
+				if (fill)
+				{
+					const Vertex2D::IndexType t0 = (indexOffset + roundVertexCount - 1);
+					const Vertex2D::IndexType t1 = (t0 + roundVertexCount);
+					const Vertex2D::IndexType t2 = (t1 + roundVertexCount);
+					const Vertex2D::IndexType t3 = (t2 + roundVertexCount);
+
+					*pIndex++ = t0;
+					*pIndex++ = t1;
+					*pIndex++ = t3;
+
+					*pIndex++ = t3;
+					*pIndex++ = t1;
+					*pIndex++ = t2;
+				}
+				else
+				{
+					const Vertex2D::IndexType t0 = (indexOffset + roundVertexCount - 1);
+
+					// 縮退三角形
+					*pIndex++ = t0;
+					*pIndex++ = t0;
+					*pIndex++ = t0;
+
+					// 縮退三角形
+					*pIndex++ = t0;
+					*pIndex++ = t0;
+					*pIndex++ = t0;
+				}
+			}
+
+			return indexCount;
 		}
 
 		Vertex2D::IndexType BuildTexturedParticles(const BufferCreatorFunc& bufferCreator, const Array<Particle2D>& particles,

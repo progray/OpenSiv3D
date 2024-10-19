@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -207,9 +207,28 @@ namespace s3d
 		return *this;
 	}
 
+	const RoundRect& RoundRect::draw(const Arg::top_<ColorF> topColor, const Arg::bottom_<ColorF> bottomColor) const
+	{
+		const Float4 color0 = topColor->toFloat4();
+		const Float4 color1 = bottomColor->toFloat4();
+
+		SIV3D_ENGINE(Renderer2D)->addRoundRect(FloatRect{ x, y, (x + w), (y + h) },
+			static_cast<float>(w),
+			static_cast<float>(h),
+			static_cast<float>(r),
+			color0, color1);
+
+		return *this;
+	}
+
 	const RoundRect& RoundRect::drawFrame(const double thickness, const ColorF& color) const
 	{
-		return drawFrame(thickness * 0.5, thickness * 0.5, color);
+		return drawFrame((thickness * 0.5), (thickness * 0.5), color);
+	}
+
+	const RoundRect& RoundRect::drawFrame(const double thickness, const Arg::top_<ColorF> topColor, const Arg::bottom_<ColorF> bottomColor) const
+	{
+		return drawFrame((thickness * 0.5), (thickness * 0.5), topColor, bottomColor);
 	}
 
 	const RoundRect& RoundRect::drawFrame(const double innerThickness, const double outerThickness, const ColorF& color) const
@@ -248,192 +267,64 @@ namespace s3d
 		return *this;
 	}
 
-	const RoundRect& RoundRect::drawShadow(const Vec2& offset, double blurRadius, const double spread, const ColorF& color) const
+	const RoundRect& RoundRect::drawFrame(const double innerThickness, const double outerThickness, const Arg::top_<ColorF> topColor, const Arg::bottom_<ColorF> bottomColor) const
 	{
-		if (blurRadius < 0.0)
+		if ((rect.w <= 0.0) || (rect.h <= 0.0)
+			|| (innerThickness < 0.0) || (outerThickness < 0.0)
+			|| ((innerThickness == 0.0) && (outerThickness == 0.0)))
 		{
 			return *this;
 		}
 
-		if (const double mr = (Min(w * 0.5, h * 0.5) + spread);
-			mr < (blurRadius * 0.5))
+		if (r <= 0.0)
 		{
-			blurRadius = (mr * 2.0);
+			rect.drawFrame(innerThickness, outerThickness, topColor, bottomColor);
+			return *this;
 		}
 
-		const Float4 colF			= color.toFloat4();
-		const double innnerOffset	= (r < blurRadius * 0.5) ? (blurRadius * 0.5) : r;
-		const double over			= Max(blurRadius * 0.5 - r, 0.0);
-		const RectF baseRect		= rect.stretched(spread - innnerOffset).movedBy(offset);
-		const double pR				= Min({ w * 0.5, h * 0.5, r });
-		const double nearR			= Max(pR - blurRadius * 0.5, 0.0);
-		const double farR			= (pR + blurRadius * 0.5 + over);
-		const float scale			= SIV3D_ENGINE(Renderer2D)->getMaxScaling();
-		const Vertex2D::IndexType quality = static_cast<uint16>(detail::CaluculateFanQuality(farR * scale));
+		const RectF outerRect = rect.stretched(outerThickness);
+		const RoundRect outerRoundRect{ outerRect, Min((r + outerThickness), (Min(outerRect.w, outerRect.h) * 0.5)) };
+		const RectF innerRect = rect.stretched(-innerThickness);
 
-		Array<Vec2> fanDirections(quality);
+		if ((innerRect.w <= 0.0) || (innerRect.h <= 0.0))
 		{
-			const double radDelta = (Math::HalfPi / (quality - 1));
-
-			for (int32 i = 0; i < quality; ++i)
-			{
-				fanDirections[i] = Circular{ 1.0, (radDelta * i) }.fastToVec2();
-			}
+			outerRoundRect.draw(topColor, bottomColor);
+			return *this;
 		}
 
-		const std::array<Vec2, 4> centers =
-		{ {
-			{ baseRect.x + baseRect.w, baseRect.y },
-			{ baseRect.x + baseRect.w, baseRect.y + baseRect.h },
-			{ baseRect.x, baseRect.y + baseRect.h },
-			{ baseRect.x, baseRect.y },
-		} };
+		const RoundRect innerRoundRect{ innerRect, Clamp((r - innerThickness), 0.0, (Min(innerRect.w, innerRect.h) * 0.5)) };
 
-		Array<Vec2> verticesInner(quality * 4);
+		SIV3D_ENGINE(Renderer2D)->addRoundRectFrame(
+			outerRoundRect,
+			innerRoundRect,
+			topColor->toFloat4(),
+			bottomColor->toFloat4()
+		);
+
+		return *this;
+	}
+
+	const RoundRect& RoundRect::drawShadow(const Vec2& offset, double blur, const double spread, const ColorF& color, const bool fill) const
+	{
+		// ブラー半径が 0 未満なら描画しない
+		if (blur < 0.0)
 		{
-			Vec2* pDst = verticesInner.data();
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[0] + nearR * fanDirections[i]);
-			}
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[1] + nearR * Vec2{ fanDirections[quality - i - 1].x, -fanDirections[quality - i - 1].y });
-			}
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[2] + nearR * -fanDirections[i]);
-			}
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[3] + nearR * Vec2{ -fanDirections[quality - i - 1].x, fanDirections[quality - i - 1].y });
-			}
+			return *this;
 		}
 
-		Array<Vec2> verticesOuter(quality * 4);
+		// 角丸でなければ長方形へ
+		if (r == 0.0)
 		{
-			Vec2* pDst = verticesOuter.data();
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[0] + farR * fanDirections[i]);
-			}
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[1] + farR * Vec2{ fanDirections[quality - i - 1].x, -fanDirections[quality - i - 1].y });
-			}
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[2] + farR * -fanDirections[i]);
-			}
-
-			for (uint32 i = 0; i < quality; ++i)
-			{
-				*pDst++ = (centers[3] + farR * Vec2{ -fanDirections[quality - i - 1].x, fanDirections[quality - i - 1].y });
-			}
+			rect.drawShadow(offset, blur, spread, color);
+			return *this;
 		}
 
-		Array<Vertex2D> vertices(4 + verticesInner.size() + verticesOuter.size());
-		{
-			Vertex2D* pDst = vertices.data();
+		RoundRect baseRoundRect = movedBy(offset).stretched(spread);
+		baseRoundRect.r += spread;
+		baseRoundRect.r = Min(baseRoundRect.r, (baseRoundRect.rect.size.minComponent() * 0.5));
+		const double blurClamped = Min({ baseRoundRect.w, baseRoundRect.h, blur });
 
-			pDst->set(centers[0], Float2{ 0.5f, 0.5f }, colF);
-			++pDst;
-			pDst->set(centers[1], Float2{ 0.5f, 0.5f }, colF);
-			++pDst;
-			pDst->set(centers[2], Float2{ 0.5f, 0.5f }, colF);
-			++pDst;
-			pDst->set(centers[3], Float2{ 0.5f, 0.5f }, colF);
-			++pDst;
-
-			for (size_t i = 0; i < verticesInner.size(); ++i)
-			{
-				pDst->set(verticesInner[i], Float2{ 0.5f, 0.5f }, colF);
-				++pDst;
-			}
-
-			for (size_t i = 0; i < verticesOuter.size(); ++i)
-			{
-				pDst->set(verticesOuter[i], Float2{ 0.5f, 0.0f }, colF);
-				++pDst;
-			}
-		}
-
-		Array<TriangleIndex> indices(6 + ((quality + 1) * 3 * 4) + ((quality) * 4 * 6));
-		{
-			TriangleIndex* pDst = indices.data();
-
-			pDst->i0 = 3;
-			pDst->i1 = 0;
-			pDst->i2 = 2;
-			++pDst;
-
-			pDst->i0 = 2;
-			pDst->i1 = 0;
-			pDst->i2 = 1;
-			++pDst;
-
-			for (uint16 i = 0; i < 4; ++i)
-			{
-				for (uint16 k = 0; k < quality - 1; ++k)
-				{
-					pDst->i0 = i;
-					pDst->i1 = (4 + i * quality + k);
-					pDst->i2 = (4 + i * quality + k + 1);
-					++pDst;
-				}
-
-				const Vertex2D::IndexType t0 = i;
-				const Vertex2D::IndexType t1 = (i + 1) * quality - 1 + 4;
-				const Vertex2D::IndexType t2 = ((i + 1) * quality) % (4 * quality) + 4;
-				const Vertex2D::IndexType t3 = (i + 1) % 4;
-
-				pDst->i0 = t0;
-				pDst->i1 = t1;
-				pDst->i2 = t2;
-				++pDst;
-
-				pDst->i0 = t0;
-				pDst->i1 = t2;
-				pDst->i2 = t3;
-				++pDst;
-			}
-
-			const uint16 v1 = static_cast<uint16>(verticesInner.size());
-
-			for (uint16 i = 0; i < 4; ++i)
-			{
-				for (uint16 k = 0; k < quality; ++k)
-				{
-					const uint16 localV1 = i * quality + k;
-					const uint16 localV2 = (localV1 + 1) % (quality * 4);
-
-					const Vertex2D::IndexType t0 = v1 + localV1 + 4;
-					const Vertex2D::IndexType t1 = v1 + localV2 + 4;
-					const Vertex2D::IndexType t2 = localV1 + 4;
-					const Vertex2D::IndexType t3 = localV2 + 4;
-
-					pDst->i0 = t0;
-					pDst->i1 = t1;
-					pDst->i2 = t2;
-					++pDst;
-
-					pDst->i0 = t2;
-					pDst->i1 = t1;
-					pDst->i2 = t3;
-					++pDst;
-				}
-			}
-		}
-
-		const Texture& texture = SIV3D_ENGINE(Renderer2D)->getBoxShadowTexture();
-		SIV3D_ENGINE(Renderer2D)->addTexturedVertices(texture, vertices.data(), vertices.size(), indices.data(), indices.size());
+		SIV3D_ENGINE(Renderer2D)->addRoundRectShadow(baseRoundRect, static_cast<float>(blurClamped), color.toFloat4(), fill);
 
 		return *this;
 	}

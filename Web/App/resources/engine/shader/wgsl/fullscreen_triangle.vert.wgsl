@@ -1,5 +1,5 @@
-//	Copyright (c) 2008-2022 Ryo Suzuki.
-//	Copyright (c) 2016-2022 OpenSiv3D Project.
+//	Copyright (c) 2008-2023 Ryo Suzuki.
+//	Copyright (c) 2016-2023 OpenSiv3D Project.
 //	Licensed under the MIT License.
 
 struct VertexOutput
@@ -8,7 +8,7 @@ struct VertexOutput
    	@location(0) UV: vec2<f32>,
 };
 
-@stage(vertex)
+@vertex
 fn main(
    @builtin(vertex_index) VertexIndex: u32,
 ) -> VertexOutput

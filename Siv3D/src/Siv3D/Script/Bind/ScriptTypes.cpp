@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -51,8 +51,11 @@
 # include <Siv3D/Wave.hpp>
 # include <Siv3D/Audio.hpp>
 # include <Siv3D/TextEditState.hpp>
+# include <Siv3D/LicenseInfo.hpp>
+# include <Siv3D/XInput.hpp>
 # include "ScriptBind.hpp"
 # include "ScriptOptional.hpp"
+# include "ScriptCamera2DParameters.hpp"
 
 namespace s3d
 {
@@ -157,6 +160,7 @@ namespace s3d
 		RegisterType(engine, "DrawableText", sizeof(DrawableText), asOBJ_VALUE | asGetTypeTraits<DrawableText>());
 		RegisterType(engine, "Transformer2D", 0, asOBJ_REF | asOBJ_SCOPED);
 		RegisterType(engine, "ScopedViewport2D", sizeof(ScopedViewport2D), asOBJ_VALUE | asGetTypeTraits<ScopedViewport2D>());
+		RegisterType(engine, "Camera2DParameters", sizeof(ScriptCamera2DParameters), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_C);
 		RegisterType(engine, "Camera2D", sizeof(Camera2D), asOBJ_VALUE | asGetTypeTraits<Camera2D>());
 		RegisterType(engine, "Emoji", sizeof(Emoji), asOBJ_VALUE | asGetTypeTraits<Emoji>());
 		RegisterType(engine, "Icon", sizeof(Icon), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS | asOBJ_APP_CLASS_C);
@@ -171,7 +175,10 @@ namespace s3d
 		RegisterType(engine, "SayBuffer", 0, asOBJ_REF);
 		RegisterType(engine, "Say_impl", sizeof(uint8), asOBJ_VALUE | asOBJ_POD);
 		RegisterType(engine, "TextEditState", sizeof(TextEditState), asOBJ_VALUE | asGetTypeTraits<TextEditState>());
-
+		RegisterType(engine, "LicenseInfo", sizeof(LicenseInfo), asOBJ_VALUE | asGetTypeTraits<LicenseInfo>());
+		RegisterType(engine, "XInputVibration", sizeof(XInputVibration), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS | asOBJ_APP_CLASS_C);
+		RegisterType(engine, "XInput_helper", sizeof(uint8), asOBJ_VALUE | asOBJ_POD);
+		RegisterType(engine, "XInput_impl", sizeof(detail::XInput_impl), asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<detail::XInput_impl>());
 
 		RegisterEnum(engine, "TextEncoding");
 		RegisterEnum(engine, "OpenMode");
@@ -260,7 +267,8 @@ namespace s3d
 		assert(engine->GetTypeIdByDecl("Font") == static_cast<int32>(ScriptTypeID::Font));
 		assert(engine->GetTypeIdByDecl("DrawableText") == static_cast<int32>(ScriptTypeID::DrawableText));
 		assert(engine->GetTypeIdByDecl("Transformer2D") == static_cast<int32>(ScriptTypeID::Transformer2D));
-		assert(engine->GetTypeIdByDecl("ScopedViewport2D") == static_cast<int32>(ScriptTypeID::ScopedViewport2D));	
+		assert(engine->GetTypeIdByDecl("ScopedViewport2D") == static_cast<int32>(ScriptTypeID::ScopedViewport2D));
+		assert(engine->GetTypeIdByDecl("Camera2DParameters") == static_cast<int32>(ScriptTypeID::Camera2DParameters));
 		assert(engine->GetTypeIdByDecl("Camera2D") == static_cast<int32>(ScriptTypeID::Camera2D));
 		assert(engine->GetTypeIdByDecl("Emoji") == static_cast<int32>(ScriptTypeID::Emoji));
 		assert(engine->GetTypeIdByDecl("Icon") == static_cast<int32>(ScriptTypeID::Icon));
@@ -273,6 +281,10 @@ namespace s3d
 		assert(engine->GetTypeIdByDecl("SayBuffer") == static_cast<int32>(ScriptTypeID::SayBuffer));
 		assert(engine->GetTypeIdByDecl("Say_impl") == static_cast<int32>(ScriptTypeID::Say_impl));
 		assert(engine->GetTypeIdByDecl("TextEditState") == static_cast<int32>(ScriptTypeID::TextEditState));
+		assert(engine->GetTypeIdByDecl("LicenseInfo") == static_cast<int32>(ScriptTypeID::LicenseInfo));
+		assert(engine->GetTypeIdByDecl("XInputVibration") == static_cast<int32>(ScriptTypeID::XInputVibration));
+		assert(engine->GetTypeIdByDecl("XInput_helper") == static_cast<int32>(ScriptTypeID::XInput_helper));
+		assert(engine->GetTypeIdByDecl("XInput_impl") == static_cast<int32>(ScriptTypeID::XInput_impl));
 
 		r = engine->RegisterTypedef("size_t", "uint64"); assert(r >= 0);
 		r = engine->RegisterTypedef("GlyphIndex", "uint32"); assert(r >= 0);

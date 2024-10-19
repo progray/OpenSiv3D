@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -64,7 +64,14 @@ namespace s3d
 	{
 		void MakeDragDrop(const FilePathView path)
 		{
-			SIV3D_ENGINE(DragDrop)->makeDragDrop(path);
+			const Array<FilePath> paths = { FilePath{ path } };
+
+			SIV3D_ENGINE(DragDrop)->makeDragDrop(paths);
+		}
+
+		void MakeDragDrop(const Array<FilePath>& paths)
+		{
+			SIV3D_ENGINE(DragDrop)->makeDragDrop(paths);
 		}
 	}
 

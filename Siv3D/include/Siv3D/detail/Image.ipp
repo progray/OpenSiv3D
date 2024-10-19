@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -209,6 +209,18 @@ namespace s3d
 	inline const Color& Image::operator[](const Point pos) const
 	{
 		return *(m_data.data() + (static_cast<size_t>(m_width) * pos.y + pos.x));
+	}
+
+	inline bool Image::inBounds(const int64 y, const int64 x) const noexcept
+	{
+		return (0 <= y) && (y < static_cast<int64>(m_height))
+			&& (0 <= x) && (x < static_cast<int64>(m_width));
+	}
+
+	inline bool Image::inBounds(const Point pos) const noexcept
+	{
+		return (0 <= pos.y) && (pos.y < static_cast<int64>(m_height))
+			&& (0 <= pos.x) && (pos.x < static_cast<int64>(m_width));
 	}
 
 	inline Color* Image::data()

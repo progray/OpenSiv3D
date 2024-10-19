@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -32,7 +32,7 @@ namespace s3d
 
 	inline void Camera2D::setTargetCenter(const Vec2 targetCenter) noexcept
 	{
-		m_grabPos.reset();
+		m_grabbedPos.reset();
 		m_pointedScale.reset();
 		m_targetCenter = targetCenter;
 	}
@@ -44,7 +44,7 @@ namespace s3d
 
 	inline void Camera2D::setTargetScale(const double targetScale) noexcept
 	{
-		m_grabPos.reset();
+		m_grabbedPos.reset();
 		m_pointedScale.reset();
 		m_targetScale = targetScale;
 	}
@@ -56,11 +56,16 @@ namespace s3d
 
 	inline void Camera2D::jumpTo(const Vec2 center, const double scale) noexcept
 	{
-		m_grabPos.reset();
+		m_grabbedPos.reset();
 		m_pointedScale.reset();
 		m_targetCenter = m_center = center;
 		m_targetScale = m_scale = scale;
 		m_positionChangeVelocity = Vec2::Zero();
 		m_scaleChangeVelocity = 0.0;
+	}
+	
+	inline const Optional<Vec2>& Camera2D::getGrabbedPos() const noexcept
+	{
+		return m_grabbedPos;
 	}
 }

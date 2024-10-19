@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -309,7 +309,10 @@ namespace s3d
 		MultiPolygon& reverse();
 
 		[[nodiscard]]
-		MultiPolygon reversed() const;
+		MultiPolygon reversed() const&;
+
+		[[nodiscard]]
+		MultiPolygon reversed() &&;
 
 		MultiPolygon& shuffle();
 
@@ -321,38 +324,62 @@ namespace s3d
 		MultiPolygon slice(size_t index, size_t length) const;
 
 		[[nodiscard]]
-		MultiPolygon movedBy(double x, double y) const;
+		MultiPolygon movedBy(double x, double y) const&;
 
 		[[nodiscard]]
-		MultiPolygon movedBy(Vec2 v) const;
+		MultiPolygon movedBy(double x, double y) && noexcept;
+
+		[[nodiscard]]
+		MultiPolygon movedBy(Vec2 v) const&;
+
+		[[nodiscard]]
+		MultiPolygon movedBy(Vec2 v) && noexcept;
 
 		MultiPolygon& moveBy(double x, double y) noexcept;
 
 		MultiPolygon& moveBy(Vec2 v) noexcept;
 
 		[[nodiscard]]
-		MultiPolygon rotated(double angle) const;
+		MultiPolygon rotated(double angle) const&;
 
 		[[nodiscard]]
-		MultiPolygon rotatedAt(const Vec2& pos, double angle) const;
+		MultiPolygon rotated(double angle) &&;
+
+		[[nodiscard]]
+		MultiPolygon rotatedAt(const Vec2& pos, double angle) const&;
+
+		[[nodiscard]]
+		MultiPolygon rotatedAt(const Vec2& pos, double angle) &&;
 
 		MultiPolygon& rotate(double angle);
 
 		MultiPolygon& rotateAt(const Vec2& pos, double angle);
 
 		[[nodiscard]]
-		MultiPolygon transformed(double s, double c, const Vec2& pos) const;
+		MultiPolygon transformed(double s, double c, const Vec2& pos) const&;
+
+		[[nodiscard]]
+		MultiPolygon transformed(double s, double c, const Vec2& pos) &&;
 
 		MultiPolygon& transform(double s, double c, const Vec2& pos);
 
 		[[nodiscard]]
-		MultiPolygon scaled(double s) const;
+		MultiPolygon scaled(double s) const&;
 
 		[[nodiscard]]
-		MultiPolygon scaled(double sx, double sy) const;
+		MultiPolygon scaled(double s) &&;
 
 		[[nodiscard]]
-		MultiPolygon scaled(Vec2 s) const;
+		MultiPolygon scaled(double sx, double sy) const&;
+
+		[[nodiscard]]
+		MultiPolygon scaled(double sx, double sy) &&;
+
+		[[nodiscard]]
+		MultiPolygon scaled(Vec2 s) const&;
+
+		[[nodiscard]]
+		MultiPolygon scaled(Vec2 s) &&;
 
 		MultiPolygon& scale(double s);
 
@@ -361,19 +388,42 @@ namespace s3d
 		MultiPolygon& scale(Vec2 s);
 
 		[[nodiscard]]
-		MultiPolygon scaledAt(Vec2 pos, double s) const;
+		MultiPolygon scaledAt(Vec2 pos, double s) const&;
 
 		[[nodiscard]]
-		MultiPolygon scaledAt(Vec2 pos, double sx, double sy) const;
+		MultiPolygon scaledAt(Vec2 pos, double s) &&;
 
 		[[nodiscard]]
-		MultiPolygon scaledAt(Vec2 pos, Vec2 s) const;
+		MultiPolygon scaledAt(Vec2 pos, double sx, double sy) const&;
+
+		[[nodiscard]]
+		MultiPolygon scaledAt(Vec2 pos, double sx, double sy) &&;
+
+		[[nodiscard]]
+		MultiPolygon scaledAt(Vec2 pos, Vec2 s) const&;
+
+		[[nodiscard]]
+		MultiPolygon scaledAt(Vec2 pos, Vec2 s) &&;
 
 		MultiPolygon& scaleAt(Vec2 pos, double s);
 
 		MultiPolygon& scaleAt(Vec2 pos, double sx, double sy);
 
 		MultiPolygon& scaleAt(Vec2 pos, Vec2 s);
+
+		[[nodiscard]]
+		double area() const noexcept;
+
+		[[nodiscard]]
+		double perimeter() const noexcept;
+
+		[[nodiscard]]
+		Vec2 centroid() const;
+
+		/// @brief 全体の凸包を計算して返します。
+		/// @return 全体の凸包
+		[[nodiscard]]
+		Polygon computeConvexHull() const;
 
 		[[nodiscard]]
 		RectF computeBoundingRect() const noexcept;

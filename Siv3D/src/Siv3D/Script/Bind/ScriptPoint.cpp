@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -136,6 +136,12 @@ namespace s3d
 		r = engine->RegisterObjectMethod(TypeName, "int32 minComponent() const", asMETHODPR(Point, minComponent, () const noexcept, int32), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "int32 maxComponent() const", asMETHODPR(Point, maxComponent, () const noexcept, int32), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "void clear()", asMETHODPR(Point, clear, () noexcept, void), asCALL_THISCALL); assert(r >= 0);
+
+		//
+		//	with
+		//
+		r = engine->RegisterObjectMethod(TypeName, "Point withX(int32) const", asMETHODPR(Point, withX, (int32) const noexcept, Point), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "Point withY(int32) const", asMETHODPR(Point, withY, (int32) const noexcept, Point), asCALL_THISCALL); assert(r >= 0);
 
 		//
 		//	set

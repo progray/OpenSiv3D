@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -22,6 +22,9 @@ namespace s3d
 		/// @return 現在のフレームで何らかの入力操作があるマウスのボタンの一覧
 		[[nodiscard]]
 		const Array<Input>& GetAllInputs() noexcept;
+
+		/// @brief 現在のフレームで、以降の MouseL / MouseR の down() と pressed() を強制的に false にします。
+		void ClearLRInput();
 
 		/// @brief マウスホイールのスクロール量を返します。
 		/// @return マウスホイールのスクロール量

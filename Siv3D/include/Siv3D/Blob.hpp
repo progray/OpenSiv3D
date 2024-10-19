@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -43,7 +43,7 @@ namespace s3d
 		explicit Blob(size_t sizeBytes);
 
 		SIV3D_NODISCARD_CXX20
-		explicit Blob(Arg::reserve_<size_t> resrveSizeBytes);
+		explicit Blob(Arg::reserve_<size_t> reserveSizeBytes);
 
 		SIV3D_NODISCARD_CXX20
 		explicit Blob(FilePathView path);
@@ -104,6 +104,8 @@ namespace s3d
 		[[nodiscard]]
 		Byte* data() noexcept;
 
+		/// @brief バイナリデータを格納する配列にアクセスします。
+		/// @return バイナリデータを格納する配列
 		[[nodiscard]]
 		const Array<Byte>& asArray() const noexcept;
 

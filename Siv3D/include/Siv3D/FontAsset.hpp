@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -56,9 +56,9 @@ namespace s3d
 		[[nodiscard]]
 		static bool IsRegistered(AssetNameView name);
 
-		static bool Load(AssetNameView name, const String& preloadText = U"");
+		static bool Load(AssetNameView name, StringView preloadText = U"");
 
-		static void LoadAsync(AssetNameView name, const String& preloadText = U"");
+		static void LoadAsync(AssetNameView name, StringView preloadText = U"");
 
 		/// @brief 指定したフォントアセットのロードが完了するまで待機します。
 		/// @param name フォントアセット名

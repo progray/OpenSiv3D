@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -105,7 +105,7 @@ namespace s3d
 
 	inline constexpr RoundRect& RoundRect::set(const RectF& _rect, const value_type _r) noexcept
 	{
-		return set(_rect.x, _rect.y, _rect.w, _rect.h, _r);
+		return set(_rect.pos.x, _rect.pos.y, _rect.size.x, _rect.size.y, _r);
 	}
 
 	inline constexpr RoundRect& RoundRect::set(const RoundRect& roundRect) noexcept

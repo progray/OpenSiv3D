@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -160,7 +160,16 @@ namespace s3d
 		r = engine->RegisterObjectMethod(TypeName, "RectF scaledAt(Vec2, double, double) const", asMETHODPR(ShapeType, scaledAt, (Vec2, double, double) const, RectF), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "RectF scaledAt(Vec2, Vec2) const", asMETHODPR(ShapeType, scaledAt, (Vec2, Vec2) const, RectF), asCALL_THISCALL); assert(r >= 0);
 
+		r = engine->RegisterObjectMethod(TypeName, "bool isEmpty() const", asMETHODPR(ShapeType, isEmpty, () const, bool), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "bool opImplConv() const", asMETHODPR(ShapeType, hasArea, () const, bool), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "bool hasArea() const", asMETHODPR(ShapeType, hasArea, () const, bool), asCALL_THISCALL); assert(r >= 0);
+
+		r = engine->RegisterObjectMethod(TypeName, "double leftX() const", asMETHODPR(ShapeType, leftX, () const, double), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "double rightX() const", asMETHODPR(ShapeType, rightX, () const, double), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "double topY() const", asMETHODPR(ShapeType, topY, () const, double), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "double bottomY() const", asMETHODPR(ShapeType, bottomY, () const, double), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "double centerX() const", asMETHODPR(ShapeType, centerX, () const, double), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "double centerY() const", asMETHODPR(ShapeType, centerY, () const, double), asCALL_THISCALL); assert(r >= 0);
 
 		r = engine->RegisterObjectMethod(TypeName, "Vec2 tl() const", asMETHODPR(ShapeType, tl, () const, Vec2), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "Vec2 tr() const", asMETHODPR(ShapeType, tr, () const, Vec2), asCALL_THISCALL); assert(r >= 0);
@@ -201,6 +210,9 @@ namespace s3d
 		r = engine->RegisterObjectMethod(TypeName, "Polygon asPolygon() const", asMETHODPR(ShapeType, asPolygon, () const, Polygon), asCALL_THISCALL); assert(r >= 0);
 
 		r = engine->RegisterObjectMethod(TypeName, "RectF lerp(const RectF& in, double) const", asMETHODPR(ShapeType, lerp, (const RectF&, double) const, RectF), asCALL_THISCALL); assert(r >= 0);
+
+		r = engine->RegisterObjectMethod(TypeName, "RectF getOverlap(const RectF& in) const", asMETHODPR(ShapeType, getOverlap, (const RectF&) const, RectF), asCALL_THISCALL); assert(r >= 0);
+
 		r = engine->RegisterObjectMethod(TypeName, "size_t hash() const", asMETHODPR(ShapeType, hash, () const, size_t), asCALL_THISCALL); assert(r >= 0);
 
 		r = engine->RegisterObjectMethod(TypeName, "bool intersects(const Point& in) const", asMETHODPR(ShapeType, intersects, (const Point&) const, bool), asCALL_THISCALL); assert(r >= 0);
@@ -251,7 +263,7 @@ namespace s3d
 		r = engine->RegisterObjectMethod(TypeName, "const RectF& drawFrame(double thickness, const ColorF& in innerColor, const ColorF& in outerColor) const", asMETHODPR(ShapeType, drawFrame, (double, const ColorF&, const ColorF&) const, const ShapeType&), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "const RectF& drawFrame(double inner, double outer, const ColorF& in = Palette::White) const", asMETHODPR(ShapeType, drawFrame, (double, double, const ColorF&) const, const ShapeType&), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "const RectF& drawFrame(double inner, double outer, const ColorF& in innerColor, const ColorF& in outerColor) const", asMETHODPR(ShapeType, drawFrame, (double, double, const ColorF&, const ColorF&) const, const ShapeType&), asCALL_THISCALL); assert(r >= 0);
-		r = engine->RegisterObjectMethod(TypeName, "const RectF& drawShadow(const Vec2&in offset, double blurRadius, double spread = 0.0, const ColorF&in color = ColorF(0.0, 0.5)) const", asMETHODPR(ShapeType, drawShadow, (const Vec2&, double, double, const ColorF&) const, const RectF&), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod(TypeName, "const RectF& drawShadow(const Vec2&in offset, double blurRadius, double spread = 0.0, const ColorF&in color = ColorF(0.0, 0.5), bool fill = true) const", asMETHODPR(ShapeType, drawShadow, (const Vec2&, double, double, const ColorF&, bool) const, const RectF&), asCALL_THISCALL); assert(r >= 0);
 
 		r = engine->RegisterObjectMethod(TypeName, "TexturedQuad opCall(const Texture& in) const", asMETHODPR(ShapeType, operator(), (const Texture&) const, TexturedQuad), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod(TypeName, "TexturedQuad opCall(const TextureRegion& in) const", asMETHODPR(ShapeType, operator(), (const TextureRegion&) const, TexturedQuad), asCALL_THISCALL); assert(r >= 0);
@@ -259,6 +271,7 @@ namespace s3d
 		r = engine->SetDefaultNamespace(TypeName); assert(r >= 0);
 		{
 			r = engine->RegisterGlobalFunction("RectF FromPoints(Vec2, Vec2)", asFUNCTION(RectF::FromPoints), asCALL_CDECL); assert(r >= 0);
+			r = engine->RegisterGlobalFunction("RectF Empty()", asFUNCTION(RectF::Empty), asCALL_CDECL); assert(r >= 0);
 		}
 		r = engine->SetDefaultNamespace(""); assert(r >= 0);
 	}

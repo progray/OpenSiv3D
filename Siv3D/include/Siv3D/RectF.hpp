@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -201,8 +201,13 @@ namespace s3d
 		/// @param _center 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::center_<position_type> _center, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::center_<position_type> _center, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param _center 
@@ -220,8 +225,13 @@ namespace s3d
 		/// @param topLeft 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::topLeft_<position_type> topLeft, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::topLeft_<position_type> topLeft, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param topLeft 
@@ -239,8 +249,13 @@ namespace s3d
 		/// @param topCenter 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::topCenter_<position_type> topCenter, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::topCenter_<position_type> topCenter, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param topCenter 
@@ -258,8 +273,13 @@ namespace s3d
 		/// @param topRight 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::topRight_<position_type> topRight, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::topRight_<position_type> topRight, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param topRight 
@@ -277,8 +297,13 @@ namespace s3d
 		/// @param rightCenter 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::rightCenter_<position_type> rightCenter, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::rightCenter_<position_type> rightCenter, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param rightCenter 
@@ -296,8 +321,13 @@ namespace s3d
 		/// @param bottomRight 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::bottomRight_<position_type> bottomRight, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::bottomRight_<position_type> bottomRight, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param bottomRight 
@@ -315,8 +345,13 @@ namespace s3d
 		/// @param bottomCenter 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::bottomCenter_<position_type> bottomCenter, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::bottomCenter_<position_type> bottomCenter, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param bottomCenter 
@@ -334,8 +369,13 @@ namespace s3d
 		/// @param bottomLeft 長方形の左下の座標
 		/// @param _w 長方形の幅
 		/// @param _h 長方形の高さ
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::bottomLeft_<position_type> bottomLeft, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::bottomLeft_<position_type> bottomLeft, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param bottomLeft 
@@ -353,8 +393,13 @@ namespace s3d
 		/// @param leftCenter 
 		/// @param _w 
 		/// @param _h 
+	# if __cpp_lib_concepts
+		template <Concept::Arithmetic W, Concept::Arithmetic H>
+	# else
+		template <class W, class H, std::enable_if_t<std::conjunction_v<std::is_arithmetic<W>, std::is_arithmetic<H>>>* = nullptr>
+	# endif
 		SIV3D_NODISCARD_CXX20
-		constexpr RectF(Arg::leftCenter_<position_type> leftCenter, value_type _w, value_type _h) noexcept;
+		constexpr RectF(Arg::leftCenter_<position_type> leftCenter, W _w, H _h) noexcept;
 
 		/// @brief 
 		/// @param leftCenter 
@@ -503,15 +548,31 @@ namespace s3d
 		/// @return *this
 		constexpr RectF& moveBy(size_type v) noexcept;
 
+		/// @brief 左右・上下方向に拡大縮小した長方形を返します。
+		/// @param xy 左方向・右方向・上方向・下方向のそれぞれの拡大縮小量
+		/// @return 左右・上下方向に拡大縮小した長方形
 		[[nodiscard]]
 		constexpr RectF stretched(value_type xy) const noexcept;
 
+		/// @brief 左右・上下方向に拡大縮小した長方形を返します。
+		/// @param _x 左方向と右方向のそれぞれの拡大縮小量
+		/// @param _y 上方向と下方向のそれぞれの拡大縮小量
+		/// @return 左右・上下方向に拡大縮小した長方形
 		[[nodiscard]]
 		constexpr RectF stretched(value_type _x, value_type _y) const noexcept;
 
+		/// @brief 左右・上下方向に拡大縮小した長方形を返します。
+		/// @param xy 左方向と右方向・上方向と下方向のそれぞれの拡大縮小量
+		/// @return 左右・上下方向に拡大縮小した長方形
 		[[nodiscard]]
 		constexpr RectF stretched(size_type xy) const noexcept;
 
+		/// @brief 上下左右方向に拡大縮小した長方形を返します。
+		/// @param top 上方向の拡大縮小量
+		/// @param right 右方向の拡大縮小量
+		/// @param bottom 下方向の拡大縮小量
+		/// @param left 左方向の拡大縮小量
+		/// @return 上下左右方向に拡大縮小した長方形
 		[[nodiscard]]
 		constexpr RectF stretched(value_type top, value_type right, value_type bottom, value_type left) const noexcept;
 
@@ -682,6 +743,30 @@ namespace s3d
 		[[nodiscard]]
 		Quad rotatedAt(Vec2 _pos, double angle) const noexcept;
 
+		/// @brief 時計回りに 90°* n 回転した長方形を返します。
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return 時計回りに 90°* n 回転した長方形
+		[[nodiscard]]
+		constexpr RectF rotated90(int32 n = 1) const noexcept;
+
+		/// @brief 自身を時計回りに 90°* n 回転します。
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return *this
+		constexpr RectF& rotate90(int32 n = 1) noexcept;
+
+		/// @brief _posを中心とし、時計回りに 90°* n 回転した長方形を返します。
+		/// @param _pos 回転の中心座標
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return _posを中心とし、時計回りに 90°* n 回転した長方形
+		[[nodiscard]]
+		constexpr RectF rotated90At(const Vec2& _pos, int32 n = 1) const noexcept;
+
+		/// @brief _posを中心とし、自身を時計回りに 90°* n 回転します。
+		/// @param _pos 回転の中心座標
+		/// @param n 時計回りに 90° 回転させる回数（負の場合は反時計回り）
+		/// @return *this
+		constexpr RectF& rotate90At(const Vec2& _pos, int32 n = 1) noexcept;
+
 		[[nodiscard]]
 		constexpr Quad shearedX(double vx) const noexcept;
 
@@ -689,11 +774,32 @@ namespace s3d
 		constexpr Quad shearedY(double vy) const noexcept;
 
 		[[nodiscard]]
+		Quad skewedX(double angle) const noexcept;
+
+		[[nodiscard]]
+		Quad skewedY(double angle) const noexcept;
+
+		[[nodiscard]]
 		constexpr RoundRect rounded(double r) const noexcept;
 
 		[[nodiscard]]
-		Polygon rounded(double tl, double tr, double br, double bl) const noexcept;
-		
+		Polygon rounded(double tl, double tr, double br, double bl) const;
+
+		/// @brief 長方形を面取りした Polygon を返します。
+		/// @param size 面取りの大きさ
+		/// @return 面取りした Polygon
+		[[nodiscard]]
+		Polygon chamfered(double size) const;
+
+		/// @brief 長方形を面取りした Polygon を返します。
+		/// @param tl 左上の面取りの大きさ
+		/// @param tr 右上の面取りの大きさ
+		/// @param br 右下の面取りの大きさ
+		/// @param bl 左下の面取りの大きさ
+		/// @return 面取りした Polygon
+		[[nodiscard]]
+		Polygon chamfered(double tl, double tr, double br, double bl) const;
+
 		/// @brief 長方形を Rect として返します。
 		/// @return 長方形の Rect
 		[[nodiscard]]
@@ -814,6 +920,20 @@ namespace s3d
 		/// @return *this
 		const RectF& draw(Arg::left_<ColorF> leftColor, Arg::right_<ColorF> rightColor) const;
 
+		/// @brief 長方形を描画します。
+		/// @param topLeftColor 長方形の左上の色
+		/// @param bottomRightColor 長方形の右下の色
+		/// @remark `rect.draw(Arg::topLeft = ColorF{ 0.0 }, Arg::bottomRight = ColorF{ 1.0 })` のように呼びます。
+		/// @return *this
+		const RectF& draw(Arg::topLeft_<ColorF> topLeftColor, Arg::bottomRight_<ColorF> bottomRightColor) const;
+
+		/// @brief 長方形を描画します。
+		/// @param topRightColor 長方形の右上の色
+		/// @param bottomLeftColor 長方形の左下の色
+		/// @remark `rect.draw(Arg::topRight = ColorF{ 0.0 }, Arg::bottomLeft = ColorF{ 1.0 })` のように呼びます。
+		/// @return 
+		const RectF& draw(Arg::topRight_<ColorF> topRightColor, Arg::bottomLeft_<ColorF> bottomLeftColor) const;
+
 		/// @brief 長方形の枠を描画します。
 		/// @param thickness 枠の太さ
 		/// @param color 色
@@ -826,6 +946,13 @@ namespace s3d
 		/// @param outerColor 外側寄りの枠の色
 		/// @return *this
 		const RectF& drawFrame(double thickness, const ColorF& innerColor, const ColorF& outerColor) const;
+
+		/// @brief 長方形の枠を描画します。
+		/// @param thickness 枠の太さ
+		/// @param topColor 上側の色
+		/// @param bottomColor 下側の色
+		/// @return *this
+		const RectF& drawFrame(double thickness, Arg::top_<ColorF> topColor, Arg::bottom_<ColorF> bottomColor) const;
 
 		/// @brief 長方形の枠を描画します。
 		/// @param innerThickness 内側寄りの枠の太さ
@@ -842,13 +969,22 @@ namespace s3d
 		/// @return *this
 		const RectF& drawFrame(double innerThickness, double outerThickness, const ColorF& innerColor, const ColorF& outerColor) const;
 
+		/// @brief 長方形の枠を描画します。
+		/// @param innerThickness 内側寄りの枠の太さ
+		/// @param outerThickness 外側寄りの枠の太さ
+		/// @param topColor 上側の色
+		/// @param bottomColor 下側の色
+		/// @return *this
+		const RectF& drawFrame(double innerThickness, double outerThickness, Arg::top_<ColorF> topColor, Arg::bottom_<ColorF> bottomColor) const;
+
 		/// @brief 長方形の影を描画します。
 		/// @param offset 影の位置のオフセット（ピクセル）
-		/// @param blurRadius 影のぼかし半径（ピクセル）
+		/// @param blur ぼかしの大きさ（ピクセル）
 		/// @param spread 影の膨張（ピクセル）
 		/// @param color 影の色
+		/// @param fill 影の内部を塗りつぶすか
 		/// @return *this
-		const RectF& drawShadow(const Vec2& offset, double blurRadius, double spread = 0.0, const ColorF& color = ColorF{ 0.0, 0.5 }) const;
+		const RectF& drawShadow(const Vec2& offset, double blur, double spread = 0.0, const ColorF& color = ColorF{ 0.0, 0.5 }, bool fill = true) const;
 
 		[[nodiscard]]
 		TexturedQuad operator ()(const Texture& texture) const;

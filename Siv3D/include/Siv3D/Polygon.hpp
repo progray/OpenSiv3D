@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -172,24 +172,60 @@ namespace s3d
 		/// @return 穴の追加に成功したら true, それ以外の場合は false
 		bool addHoles(Array<Array<Vec2>> holes);
 
+		/// @brief 平行移動した多角形を返します。
+		/// @param x X 方向の移動量
+		/// @param y Y 方向の移動量
+		/// @return 平行移動した多角形
 		[[nodiscard]]
-		Polygon movedBy(double x, double y) const;
+		Polygon movedBy(double x, double y) const&;
 
+		/// @brief 平行移動した多角形を返します。
+		/// @param x X 方向の移動量
+		/// @param y Y 方向の移動量
+		/// @return 平行移動した多角形
 		[[nodiscard]]
-		Polygon movedBy(Vec2 v) const;
+		Polygon movedBy(double x, double y) && noexcept;
 
+		/// @brief 平行移動した多角形を返します。
+		/// @param v 移動量
+		/// @return 平行移動した多角形
+		[[nodiscard]]
+		Polygon movedBy(Vec2 v) const&;
+
+		/// @brief 平行移動した多角形を返します。
+		/// @param v 移動量
+		/// @return 平行移動した多角形
+		[[nodiscard]]
+		Polygon movedBy(Vec2 v) && noexcept;
+
+		/// @brief 多角形を平行移動します。
+		/// @param x X 方向の移動量
+		/// @param y Y 方向の移動量
+		/// @return *this
 		Polygon& moveBy(double x, double y) noexcept;
 
+		/// @brief 多角形を平行移動します。
+		/// @param v 移動量
+		/// @return *this
 		Polygon& moveBy(Vec2 v) noexcept;
 
 		[[nodiscard]]
-		Polygon rotated(double angle) const;
+		Polygon rotated(double angle) const&;
 
 		[[nodiscard]]
-		Polygon rotatedAt(double x, double y, double angle) const;
+		Polygon rotated(double angle) &&;
 
 		[[nodiscard]]
-		Polygon rotatedAt(Vec2 pos, double angle) const;
+		Polygon rotatedAt(double x, double y, double angle) const&;
+
+		[[nodiscard]]
+		Polygon rotatedAt(double x, double y, double angle) &&;
+
+		[[nodiscard]]
+		Polygon rotatedAt(Vec2 pos, double angle) const&;
+
+		[[nodiscard]]
+		Polygon rotatedAt(Vec2 pos, double angle) &&;
 
 		Polygon& rotate(double angle);
 
@@ -198,38 +234,128 @@ namespace s3d
 		Polygon& rotateAt(Vec2 pos, double angle);
 
 		[[nodiscard]]
-		Polygon transformed(double s, double c, const Vec2& pos) const;
+		Polygon transformed(double s, double c, const Vec2& pos) const&;
+
+		[[nodiscard]]
+		Polygon transformed(double s, double c, const Vec2& pos) &&;
 
 		Polygon& transform(double s, double c, const Vec2& pos);
 
+		/// @brief 原点 (0, 0) を中心に拡大・縮小した多角形を返します。
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
 		[[nodiscard]]
-		Polygon scaled(double s) const;
+		Polygon scaled(double s) const&;
+
+		/// @brief 原点 (0, 0) を中心に拡大・縮小した多角形を返します。
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形	
+		[[nodiscard]]
+		Polygon scaled(double s) &&;
 		
+		/// @brief 原点 (0, 0) を中心に拡大・縮小した多角形を返します。
+		/// @param sx X 方向の拡大率
+		/// @param sy Y 方向の拡大率
+		/// @return 拡大・縮小した多角形
 		[[nodiscard]]
-		Polygon scaled(double sx, double sy) const;
+		Polygon scaled(double sx, double sy) const&;
 
+		/// @brief 原点 (0, 0) を中心に拡大・縮小した多角形を返します。
+		/// @param sx X 方向の拡大率
+		/// @param sy Y 方向の拡大率
+		/// @return 拡大・縮小した多角形
 		[[nodiscard]]
-		Polygon scaled(Vec2 s) const;
+		Polygon scaled(double sx, double sy) &&;
 
+		/// @brief 原点 (0, 0) を中心に拡大・縮小した多角形を返します。
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
+		[[nodiscard]]
+		Polygon scaled(Vec2 s) const&;
+
+		/// @brief 原点 (0, 0) を中心に拡大・縮小した多角形を返します。
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
+		[[nodiscard]]
+		Polygon scaled(Vec2 s) &&;
+
+		/// @brief 原点 (0, 0) を中心に拡大・縮小します。
+		/// @param s 拡大率
+		/// @return *this
 		Polygon& scale(double s);
 
+		/// @brief 原点 (0, 0) を中心に拡大・縮小します。
+		/// @param sx X 方向の拡大率
+		/// @param sy Y 方向の拡大率
+		/// @return *this
 		Polygon& scale(double sx, double sy);
 
+		/// @brief 原点 (0, 0) を中心に拡大・縮小します。
+		/// @param s 拡大率
+		/// @return *this
 		Polygon& scale(Vec2 s);
 
+		/// @brief 指定した位置を中心に拡大・縮小した多角形を返します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
 		[[nodiscard]]
-		Polygon scaledAt(Vec2 pos, double s) const;
+		Polygon scaledAt(Vec2 pos, double s) const&;
 
+		/// @brief 指定した位置を中心に拡大・縮小した多角形を返します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
 		[[nodiscard]]
-		Polygon scaledAt(Vec2 pos, double sx, double sy) const;
+		Polygon scaledAt(Vec2 pos, double s) &&;
 
+		/// @brief 指定した位置を中心に拡大・縮小した多角形を返します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param sx X 方向の拡大率
+		/// @param sy Y 方向の拡大率
+		/// @return 拡大・縮小した多角形
 		[[nodiscard]]
-		Polygon scaledAt(Vec2 pos, Vec2 s) const;
+		Polygon scaledAt(Vec2 pos, double sx, double sy) const&;
 
+		/// @brief 指定した位置を中心に拡大・縮小した多角形を返します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param sx X 方向の拡大率
+		/// @param sy Y 方向の拡大率
+		/// @return 拡大・縮小した多角形
+		[[nodiscard]]
+		Polygon scaledAt(Vec2 pos, double sx, double sy) &&;
+
+		/// @brief 指定した位置を中心に拡大・縮小した多角形を返します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
+		[[nodiscard]]
+		Polygon scaledAt(Vec2 pos, Vec2 s) const&;
+
+		/// @brief 指定した位置を中心に拡大・縮小した多角形を返します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param s 拡大率
+		/// @return 拡大・縮小した多角形
+		[[nodiscard]]
+		Polygon scaledAt(Vec2 pos, Vec2 s) &&;
+
+		/// @brief 指定した位置を中心に拡大・縮小します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param s 拡大率
+		/// @return *this
 		Polygon& scaleAt(Vec2 pos, double s);
 
+		/// @brief 指定した位置を中心に拡大・縮小します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param sx X 方向の拡大率
+		/// @param sy Y 方向の拡大率
+		/// @return *this
 		Polygon& scaleAt(Vec2 pos, double sx, double sy);
 
+		/// @brief 指定した位置を中心に拡大・縮小します。
+		/// @param pos 拡大・縮小の中心位置
+		/// @param s 拡大率
+		/// @return *this
 		Polygon& scaleAt(Vec2 pos, Vec2 s);
 
 		/// @brief 多角形の面積を返します。
@@ -364,26 +490,62 @@ namespace s3d
 
 		const Polygon& overwrite(Image& dst, const Vec2& pos, const Color& color, Antialiased antialiased = Antialiased::Yes) const;
 
+		/// @brief 多角形を描画します。
+		/// @param color 色
+		/// @return *this
 		const Polygon& draw(const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形を移動して描画します。
+		/// @param x X 方向の移動量
+		/// @param y Y 方向の移動量
+		/// @param color 色
 		void draw(double x, double y, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形を移動して描画します。
+		/// @param pos 移動量
+		/// @param color 色
 		void draw(const Vec2& pos, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形を回転 + 移動して描画します。
+		/// @param angle 回転角度（ラジアン）
+		/// @param pos 位置
+		/// @param color 色
 		void drawTransformed(double angle, const Vec2& pos, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形を回転 + 移動して描画します。
+		/// @param s 回転角度のサイン
+		/// @param c 回転角度のコサイン
+		/// @param pos 位置
+		/// @param color 色
 		void drawTransformed(double s, double c, const Vec2& pos, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形の枠を描画します。
+		/// @param thickness 枠の太さ（ピクセル）
+		/// @param color 色
+		/// @return *this
 		const Polygon& drawFrame(double thickness = 1.0, const ColorF& color = Palette::White) const;
 
 		void drawFrame(double x, double y, double thickness = 1.0, const ColorF& color = Palette::White) const;
 
 		void drawFrame(const Vec2& pos, double thickness = 1.0, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形をワイヤフレーム表示で描画します。
+		/// @param thickness ワイヤフレームの太さ（ピクセル）
+		/// @param color 色
+		/// @return *this
 		const Polygon& drawWireframe(double thickness = 1.0, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形をワイヤフレーム表示で描画します。
+		/// @param x X 座標のオフセット
+		/// @param y Y 座標のオフセット
+		/// @param thickness ワイヤフレームの太さ（ピクセル）
+		/// @param color 色
 		void drawWireframe(double x, double y, double thickness = 1.0, const ColorF& color = Palette::White) const;
 
+		/// @brief 多角形をワイヤフレーム表示で描画します。
+		/// @param pos 座標のオフセット
+		/// @param thickness ワイヤフレームの太さ（ピクセル）
+		/// @param color 色
 		void drawWireframe(const Vec2& pos, double thickness = 1.0, const ColorF& color = Palette::White) const;
 
 		[[nodiscard]]

@@ -2,14 +2,15 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
 //-----------------------------------------------
 
 # include <Siv3D/Wave.hpp>
+# include <Siv3D/AudioDecoder.hpp>
 # include <Siv3D/EngineLog.hpp>
 # include <Siv3D/AsyncTask.hpp>
 
@@ -64,23 +65,15 @@ namespace s3d::Platform::Web::AudioDecoder
         }
     }
 
-    void DecodeFromFile(const FilePath& path, std::promise<Wave> promise)
+    void DecodeFromFile(const FilePathView path, std::promise<Wave> promise)
     {
-        if (Wave processedByEmbeddedCodec(path); !processedByEmbeddedCodec.isEmpty())
-        {
-            // Immediately resolve
-            promise.set_value(processedByEmbeddedCodec);
-        }
-        else
-        {
-            auto data = new detail::AsyncDecodedAudioData(std::move(promise));
-            siv3dDecodeAudioFromFileAsync(path.toUTF8().c_str(), detail::OnDecodeAudioFromFile, data);
+        auto data = new detail::AsyncDecodedAudioData(std::move(promise));
+        siv3dDecodeAudioFromFileAsync(path.toUTF8().c_str(), detail::OnDecodeAudioFromFile, data);
 
-            LOG_TRACE(U"DecodeAudioFromFile: falling back to Browser-Supported Decoding");
-        }
+        LOG_TRACE(U"DecodeAudioFromFile: falling back to Browser-Supported Decoding");
     }
 
-    AsyncTask<Wave> DecodeFromFile(const FilePath& path)
+    AsyncTask<Wave> DecodeFromFile(const FilePathView path)
     {
         std::promise<Wave> promise;
         AsyncTask<Wave> future { promise.get_future() };

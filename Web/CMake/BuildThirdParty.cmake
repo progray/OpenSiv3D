@@ -84,15 +84,13 @@ target_sources(double_conversion
         ../Siv3D/src/ThirdParty/double-conversion/double-to-string.cc
         ../Siv3D/src/ThirdParty/double-conversion/fast-dtoa.cc
         ../Siv3D/src/ThirdParty/double-conversion/fixed-dtoa.cc
-        ../Siv3D/src/ThirdParty/double-conversion/string-to-double.cc
-        ../Siv3D/src/ThirdParty/double-conversion/strtod.cc
 )
 
 
 
 add_library(easyexif)
 
-target_sources(absl
+target_sources(easyexif
     PRIVATE
         ../Siv3D/src/ThirdParty/easyexif/exif.cpp
 )
@@ -101,7 +99,7 @@ target_sources(absl
 
 add_library(fmt)
 
-target_sources(absl
+target_sources(fmt
     PRIVATE
         ../Siv3D/src/ThirdParty/fmt/format.cc
 )
@@ -156,7 +154,6 @@ target_sources(lunasvg
         ../Siv3D/src/ThirdParty/lunasvg/canvas.cpp
         ../Siv3D/src/ThirdParty/lunasvg/clippathelement.cpp
         ../Siv3D/src/ThirdParty/lunasvg/defselement.cpp
-        ../Siv3D/src/ThirdParty/lunasvg/document.cpp
         ../Siv3D/src/ThirdParty/lunasvg/element.cpp
         ../Siv3D/src/ThirdParty/lunasvg/gelement.cpp
         ../Siv3D/src/ThirdParty/lunasvg/geometryelement.cpp

@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -61,7 +61,7 @@ namespace s3d
 		/// @param typeface フォントの種類
 		/// @param style フォントのスタイル
 		SIV3D_NODISCARD_CXX20
-		Font(int32 fontSize, Typeface typeface = Typeface::Regular, FontStyle style = FontStyle::Default);
+		explicit Font(int32 fontSize, Typeface typeface = Typeface::Regular, FontStyle style = FontStyle::Default);
 
 		/// @brief フォントを作成します。
 		/// @param fontMethod フォントのレンダリング方式
@@ -91,7 +91,7 @@ namespace s3d
 		/// @brief デストラクタ
 		virtual ~Font();
 
-		/// @brief フォールバッグフォントを追加します。
+		/// @brief フォールバックフォントを追加します。
 		/// @param font フォールバックとして追加するフォント
 		/// @return 追加に成功した場合 true, それ以外の場合は false
 		bool addFallback(const Font& font) const;

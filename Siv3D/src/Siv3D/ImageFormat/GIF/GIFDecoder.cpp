@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -63,7 +63,7 @@ namespace s3d
 
 	Optional<ImageInfo> GIFDecoder::getImageInfo(IReader& reader, const FilePathView) const
 	{
-		uint8 buf[4];
+		uint8 buf[10];
 
 		if (not reader.lookahead(buf))
 		{
@@ -71,8 +71,8 @@ namespace s3d
 			return{};
 		}
 
-		const int32 width = ((buf[1] << 8) + (buf[0] << 0));
-		const int32 height = ((buf[3] << 8) + (buf[2] << 0));
+		const int32 width = ((buf[7] << 8) + (buf[6] << 0));
+		const int32 height = ((buf[9] << 8) + (buf[8] << 0));
 		const Size size{ width, height };
 		
 		ImagePixelFormat pixelFormat = ImagePixelFormat::R8G8B8A8;
@@ -159,10 +159,19 @@ namespace s3d
 
 		if ((width == 0) || (height == 0))
 		{
+			DGifCloseFile(gif, &error);
+
 			return{};
 		}
 
 		Image image{ width, height };
+		if (!image)
+		{
+			DGifCloseFile(gif, &error);
+
+			return{};
+		}
+
 		Color* pDst = image.data();
 
 		for (size_t y = 0; y < height; ++y)

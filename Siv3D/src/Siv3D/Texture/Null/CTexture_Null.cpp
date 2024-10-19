@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -35,12 +35,12 @@ namespace s3d
 		return 0;
 	}
 
-	Texture::IDType CTexture_Null::createUnmipped(const Image&, TextureDesc)
+	Texture::IDType CTexture_Null::create(const Image&, TextureDesc)
 	{
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createMipped(const Image&, const Array<Image>&, TextureDesc)
+	Texture::IDType CTexture_Null::create(const Image&, const Array<Image>&, TextureDesc)
 	{
 		return Texture::IDType::NullAsset();
 	}
@@ -55,32 +55,32 @@ namespace s3d
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createRT(const Size&, const TextureFormat&, const HasDepth)
+	Texture::IDType CTexture_Null::createRT(const Size&, const TextureFormat&, const HasDepth, const HasMipMap)
 	{
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createRT(const Image&, const HasDepth)
+	Texture::IDType CTexture_Null::createRT(const Image&, const HasDepth, const HasMipMap)
 	{
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createRT(const Grid<float>&, const HasDepth)
+	Texture::IDType CTexture_Null::createRT(const Grid<float>&, const HasDepth, const HasMipMap)
 	{
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createRT(const Grid<Float2>&, const HasDepth)
+	Texture::IDType CTexture_Null::createRT(const Grid<Float2>&, const HasDepth, const HasMipMap)
 	{
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createRT(const Grid<Float4>&, const HasDepth)
+	Texture::IDType CTexture_Null::createRT(const Grid<Float4>&, const HasDepth, const HasMipMap)
 	{
 		return Texture::IDType::NullAsset();
 	}
 
-	Texture::IDType CTexture_Null::createMSRT(const Size&, const TextureFormat&, const HasDepth)
+	Texture::IDType CTexture_Null::createMSRT(const Size&, const TextureFormat&, const HasDepth, const HasMipMap)
 	{
 		return Texture::IDType::NullAsset();
 	}
@@ -131,6 +131,11 @@ namespace s3d
 	}
 
 	void CTexture_Null::clearRT(Texture::IDType, const ColorF&)
+	{
+
+	}
+
+	void CTexture_Null::generateMips(const Texture::IDType)
 	{
 
 	}

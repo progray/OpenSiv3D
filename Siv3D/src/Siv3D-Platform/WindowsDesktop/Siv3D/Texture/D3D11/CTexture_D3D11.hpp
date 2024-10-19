@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -49,25 +49,25 @@ namespace s3d
 
 		size_t getTextureCount() const override;
 
-		Texture::IDType createUnmipped(const Image& image, TextureDesc desc) override;
+		Texture::IDType create(const Image& image, TextureDesc desc) override;
 
-		Texture::IDType createMipped(const Image& image, const Array<Image>& mips, TextureDesc desc) override;
+		Texture::IDType create(const Image& image, const Array<Image>& mips, TextureDesc desc) override;
 
 		Texture::IDType createDynamic(const Size& size, const void* pData, uint32 stride, const TextureFormat& format, TextureDesc desc) override;
 
 		Texture::IDType createDynamic(const Size& size, const ColorF& color, const TextureFormat& format, TextureDesc desc) override;
 
-		Texture::IDType createRT(const Size& size, const TextureFormat& format, const HasDepth hasDepth) override;
+		Texture::IDType createRT(const Size& size, const TextureFormat& format, HasDepth hasDepth, HasMipMap hasMipMap) override;
 
-		Texture::IDType createRT(const Image& image, const HasDepth hasDepth) override;
+		Texture::IDType createRT(const Image& image, HasDepth hasDepth, HasMipMap hasMipMap) override;
 
-		Texture::IDType createRT(const Grid<float>& image, const HasDepth hasDepth) override;
+		Texture::IDType createRT(const Grid<float>& image, HasDepth hasDepth, HasMipMap hasMipMap) override;
 
-		Texture::IDType createRT(const Grid<Float2>& image, const HasDepth hasDepth) override;
+		Texture::IDType createRT(const Grid<Float2>& image, HasDepth hasDepth, HasMipMap hasMipMap) override;
 
-		Texture::IDType createRT(const Grid<Float4>& image, const HasDepth hasDepth) override;
+		Texture::IDType createRT(const Grid<Float4>& image, HasDepth hasDepth, HasMipMap hasMipMap) override;
 
-		Texture::IDType createMSRT(const Size& size, const TextureFormat& format, const HasDepth hasDepth) override;
+		Texture::IDType createMSRT(const Size& size, const TextureFormat& format, HasDepth hasDepth, HasMipMap hasMipMap) override;
 
 		void release(Texture::IDType handleID) override;
 
@@ -89,6 +89,8 @@ namespace s3d
 
 		void clearRT(Texture::IDType handleID, const ColorF& color) override;
 
+		void generateMips(Texture::IDType handleID) override;
+
 		void readRT(Texture::IDType handleID, Image& image) override;
 
 		void readRT(Texture::IDType handleID, Grid<float>& image) override;
@@ -102,6 +104,7 @@ namespace s3d
 		//
 		// D3D11
 		//
+		ID3D11Texture2D* getTexture(Texture::IDType handleID);
 
 		ID3D11ShaderResourceView** getSRVPtr(Texture::IDType handleID);
 

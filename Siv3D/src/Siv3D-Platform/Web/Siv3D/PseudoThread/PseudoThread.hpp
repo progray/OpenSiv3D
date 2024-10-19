@@ -3,7 +3,7 @@
 //	This file is part of the Siv3D Engine.
 //
 //	Copyright (c) 2020-2021 Kamenoko-Nyokonyoko
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -19,6 +19,11 @@
 
 namespace s3d
 {
+    namespace detail
+    {
+        void clearInterval(long intervalID);
+    }
+
     class PseudoThread
     {
     public:
@@ -50,7 +55,7 @@ namespace s3d
             if (intervalID > 0) 
             {
                 std::get<0>(*__p)->nativeHandle = intervalID;
-                std::get<0>(*__p)->terminateThread = &::emscripten_clear_interval;
+                std::get<0>(*__p)->terminateThread = &detail::clearInterval;
                 __p.release();
             }
         }

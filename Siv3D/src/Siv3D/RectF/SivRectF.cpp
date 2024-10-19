@@ -2,8 +2,8 @@
 //
 //	This file is part of the Siv3D Engine.
 //
-//	Copyright (c) 2008-2022 Ryo Suzuki
-//	Copyright (c) 2016-2022 OpenSiv3D Project
+//	Copyright (c) 2008-2023 Ryo Suzuki
+//	Copyright (c) 2016-2023 OpenSiv3D Project
 //
 //	Licensed under the MIT License.
 //
@@ -89,7 +89,7 @@ namespace s3d
 		return quad;
 	}
 
-	Polygon RectF::rounded(double tl, double tr, double br, double bl) const noexcept
+	Polygon RectF::rounded(double tl, double tr, double br, double bl) const
 	{
 		constexpr double epsilon = 0.001;
 
@@ -222,6 +222,194 @@ namespace s3d
 		}
 
 		return Polygon{ vertices };
+	}
+
+	Polygon RectF::chamfered(double s) const
+	{
+		if (s <= 0.0)
+		{
+			return asPolygon();
+		}
+
+		s = Min(s, (Min(w, h) * 0.5));
+
+		Array<Vec2> points;
+
+		// 上辺
+		if ((s * 2.0) < w)
+		{
+			points.emplace_back((x + s), y);
+			points.emplace_back((x + w - s), y);
+		}
+		else
+		{
+			points.emplace_back((x + w * 0.5), y);
+		}
+
+		// 右辺
+		if ((s * 2.0) < h)
+		{
+			points.emplace_back((x + w), (y + s));
+			points.emplace_back((x + w), (y + h - s));
+		}
+		else
+		{
+			points.emplace_back((x + w), (y + h * 0.5));
+		}
+
+		// 下辺
+		if ((s * 2.0) < w)
+		{
+			points.emplace_back((x + w - s), (y + h));
+			points.emplace_back((x + s), (y + h));
+		}
+		else
+		{
+			points.emplace_back((x + w * 0.5), (y + h));
+		}
+
+		// 左辺
+		if ((s * 2.0) < h)
+		{
+			points.emplace_back(x, (y + h - s));
+			points.emplace_back(x, (y + s));
+		}
+		else
+		{
+			points.emplace_back(x, (y + h * 0.5));
+		}
+
+		Array<TriangleIndex> indices(points.size() - 2);
+
+		for (Vertex2D::IndexType i = 0; i < indices.size(); ++i)
+		{
+			indices[i] = { 0, static_cast<Vertex2D::IndexType>(i + 1), static_cast<Vertex2D::IndexType>(i + 2) };
+		}
+
+		return Polygon{ points, indices, *this };
+	}
+
+	Polygon RectF::chamfered(double tl, double tr, double br, double bl) const
+	{
+		tl = Max(tl, 0.0);
+		tr = Max(tr, 0.0);
+		br = Max(br, 0.0);
+		bl = Max(bl, 0.0);
+
+		if (double top = (tl + tr);
+			w < top)
+		{
+			tl *= (w / top);
+			tr *= (w / top);
+		}
+
+		if (double right = (tr + br);
+			h < right)
+		{
+			tr *= (h / right);
+			br *= (h / right);
+		}
+
+		if (double bottom = (br + bl);
+			w < bottom)
+		{
+			br *= (w / bottom);
+			bl *= (w / bottom);
+		}
+
+		if (double left = (bl + tl);
+			h < left)
+		{
+			bl *= (h / left);
+			tl *= (h / left);
+		}
+
+		Array<Vec2> points;
+
+		// 左上
+		if (tl)
+		{
+			const Vec2 p0{ x, (y + tl) };
+			const Vec2 p1{ (x + tl), y };
+			points << p0;
+			points << p1;
+		}
+		else
+		{
+			points << this->tl();
+		}
+
+		// 右上
+		if (tr)
+		{
+			const Vec2 p0{ (x + w - tr), y };
+			const Vec2 p1{ (x + w), (y + tr) };
+
+			if (points.back() != p0)
+			{
+				points << p0;
+			}
+
+			points << p1;
+		}
+		else
+		{
+			points << this->tr();
+		}
+
+		// 右下
+		if (br)
+		{
+			const Vec2 p0{ (x + w), (y + h - br) };
+			const Vec2 p1{ (x + w - br), (y + h) };
+
+			if (points.back() != p0)
+			{
+				points << p0;
+			}
+
+			points << p1;
+		}
+		else
+		{
+			points << this->br();
+		}
+
+		// 左下
+		if (bl)
+		{
+			const Vec2 p0{ (x + bl), (y + h) };
+			const Vec2 p1{ x, (y + h - bl) };
+
+			if (points.back() != p0)
+			{
+				points << p0;
+			}
+			
+			if (points.front() != p1)
+			{
+				points << p1;
+			}
+		}
+		else
+		{
+			const Vec2 p0 = this->bl();
+
+			if ((points.back() != p0)
+				&& (points.front() != p0))
+			{
+				points << p0;
+			}
+		}
+
+		Array<TriangleIndex> indices(points.size() - 2);
+
+		for (Vertex2D::IndexType i = 0; i < indices.size(); ++i)
+		{
+			indices[i] = { 0, static_cast<Vertex2D::IndexType>(i + 1), static_cast<Vertex2D::IndexType>(i + 2) };
+		}
+
+		return Polygon{ points, indices, *this };
 	}
 
 	LineString RectF::outline(const CloseRing closeRing) const
@@ -418,6 +606,30 @@ namespace s3d
 		return *this;
 	}
 
+	const RectF& RectF::draw(const Arg::topLeft_<ColorF> topLeftColor, const Arg::bottomRight_<ColorF> bottomRightColor) const
+	{
+		const Float4 color0 = topLeftColor->toFloat4();
+		const Float4 color2 = bottomRightColor->toFloat4();
+		const Float4 color1 = ((color0 + color2) * 0.5f);
+
+		SIV3D_ENGINE(Renderer2D)->addRect(FloatRect{ x, y, (x + w), (y + h) },
+			{ color0, color1, color2, color1 });
+
+		return *this;
+	}
+
+	const RectF& RectF::draw(const Arg::topRight_<ColorF> topRightColor, const Arg::bottomLeft_<ColorF> bottomLeftColor) const
+	{
+		const Float4 color0 = topRightColor->toFloat4();
+		const Float4 color2 = bottomLeftColor->toFloat4();
+		const Float4 color1 = ((color0 + color2) * 0.5f);
+
+		SIV3D_ENGINE(Renderer2D)->addRect(FloatRect{ x, y, (x + w), (y + h) },
+			{ color1, color0, color1, color2 });
+
+		return *this;
+	}
+
 	const RectF& RectF::drawFrame(const double thickness, const ColorF& color) const
 	{
 		return drawFrame((thickness * 0.5), (thickness * 0.5), color);
@@ -426,6 +638,11 @@ namespace s3d
 	const RectF& RectF::drawFrame(const double thickness, const ColorF& innerColor, const ColorF& outerColor) const
 	{
 		return drawFrame((thickness * 0.5), (thickness * 0.5), innerColor, outerColor);
+	}
+
+	const RectF& RectF::drawFrame(const double thickness, const Arg::top_<ColorF> topColor, const Arg::bottom_<ColorF> bottomColor) const
+	{
+		return drawFrame((thickness * 0.5), (thickness * 0.5), topColor, bottomColor);
 	}
 
 	const RectF& RectF::drawFrame(const double innerThickness, const double outerThickness, const ColorF& color) const
@@ -462,71 +679,30 @@ namespace s3d
 
 		return *this;
 	}
-	
-	const RectF& RectF::drawShadow(const Vec2& offset, const double blurRadius, const double spread, const ColorF& color) const
+
+	const RectF& RectF::drawFrame(const double innerThickness, const double outerThickness, const Arg::top_<ColorF> topColor, const Arg::bottom_<ColorF> bottomColor) const
 	{
-		if (blurRadius < 0.0)
+		SIV3D_ENGINE(Renderer2D)->addRectFrameTB(
+			FloatRect{ (x + innerThickness), (y + innerThickness), (x + w - innerThickness), (y + h - innerThickness) },
+			static_cast<float>(innerThickness + outerThickness),
+			topColor->toFloat4(), bottomColor->toFloat4());
+
+		return *this;
+	}
+	
+	const RectF& RectF::drawShadow(const Vec2& offset, const double blur, const double spread, const ColorF& color, const bool fill) const
+	{
+		// ブラー半径が 0 未満なら描画しない
+		if (blur < 0.0)
 		{
 			return *this;
 		}
 
-		const Float4 colorF = color.toFloat4();
-		const RectF rect	= RectF{ pos + offset, size }.stretched(spread + blurRadius * 0.5);
-		const double rr		= Min({ (rect.w * 0.5), (rect.h * 0.5), blurRadius });
-		const float xs[4] =
-		{
-			static_cast<float>(rect.x),
-			static_cast<float>(rect.x + rr),
-			static_cast<float>(rect.x + rect.w - rr),
-			static_cast<float>(rect.x + rect.w)
-		};
-		const float ys[4] =
-		{
-			static_cast<float>(rect.y),
-			static_cast<float>(rect.y + rr),
-			static_cast<float>(rect.y + rect.h - rr),
-			static_cast<float>(rect.y + rect.h)
-		};
-		const float uvs[4] = { 0.0f, 0.5f, 0.5f, 1.0f };
+		const RectF baseRect = movedBy(offset).stretched(spread);
+		const double blurClamped = Min({ baseRect.w, baseRect.h, blur });
 
-		Array<Vertex2D> vertices(16);
-		{
-			Vertex2D* pDst = vertices.data();
-
-			for (int32 i = 0; i < 16; ++i)
-			{
-				pDst->pos.set(xs[i % 4], ys[i / 4]);
-				pDst->tex.set(uvs[i % 4], uvs[i / 4]);
-				pDst->color = colorF;
-				++pDst;
-			}
-		}
-
-		Array<TriangleIndex> indices(18);
-		{
-			TriangleIndex* pDst = indices.data();
-
-			for (Vertex2D::IndexType ty = 0; ty < 3; ++ty)
-			{
-				for (Vertex2D::IndexType tx = 0; tx < 3; ++tx)
-				{
-					const Vertex2D::IndexType base = ((ty * 4) + tx);
-
-					pDst->i0 = base;
-					pDst->i1 = (base + 1);
-					pDst->i2 = (base + 4);
-					++pDst;
-
-					pDst->i0 = (base + 4);
-					pDst->i1 = (base + 1);
-					pDst->i2 = (base + 5);
-					++pDst;
-				}
-			}
-		}
-
-		const Texture& texture = SIV3D_ENGINE(Renderer2D)->getBoxShadowTexture();
-		SIV3D_ENGINE(Renderer2D)->addTexturedVertices(texture, vertices.data(), vertices.size(), indices.data(), indices.size());
+		SIV3D_ENGINE(Renderer2D)->addRectShadow(FloatRect{ baseRect.x, baseRect.y, (baseRect.x + baseRect.w), (baseRect.y + baseRect.h) },
+			static_cast<float>(blurClamped), color.toFloat4(), fill);
 
 		return *this;
 	}
